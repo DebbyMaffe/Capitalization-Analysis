@@ -1,6 +1,6 @@
 # Capitalization-Analysis
 
-**Euro Area Banks' Capitalization Analysis** (2016-2021)
+**Euro Area Banks' Capitalization Analysis** (2016-2021).
 
 The dataset used for the project has been taken from **BankFocus**. Let's explain the **characteristic** of each variable:
 -   ***company*** : company name Latin alphabet
@@ -37,3 +37,12 @@ The dataset used for the project has been taken from **BankFocus**. Let's explai
 -   ***totCapRatio*** : Total Capital Ratio.
 
 The first step of the analysis include *filtering* our data and *choosing* the [consolidation]{.underline} [code]{.underline} that would provide us the best sample of accounts. Considering the time frame 2016 - 2021, let's inspect the observations based on the assessment of three main accounts: ***Revenue***, ***Total Assets*** and ***Equity*** capital. By calculating the total amount of each account, we can notice that the banks presenting the consolidated accounts with an unconsolidated companion, show the ***greatest*** results in the *size* assessment. For this reason, let's decide to filter our data by considering the **C2** Consolidation Code. Regarding the specialisation, let's focus our analysis on the most common type of institutions, which are ***Commercial*** and ***Investment*** banks.
+
+Performing a *generic* capitalization analysis firstly, then continue with splitting the analysis according to three factors: ***Specialisation***, ***Country***, and ***Size***.
+
+Once we analyzed the behavior of the main accounts such as *Total Equity*, *Total Assets*, *Retained Earnings* and *Other Comprehensive Income*, let's proceed by evaluating the:
+
+-   ***Basel III Leverage Ratio***, in order to assess the ability of a company to *meet* its financial obligations;
+-   ***TIER1 Ratio***, revealing the ability to *absorb* a reasonable amount of losses *without* risk of failure;
+-   ***Total Capital Ratio***, showing the *stability* and *efficiency* of the bank's financial system;
+-   ***CET1 Ratio***, meaning the ability of a bank to *withstand* financial distress.
