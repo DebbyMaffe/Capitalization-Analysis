@@ -1,0 +1,1863 @@
+---
+title: "Capitalization Analysis"
+author: "Deborah Maffezzoni"
+date: "2023-03-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# load packages
+
+library(readxl)
+library(magrittr)
+library(dplyr)
+library(visdat)
+library(naniar)
+library(DataExplorer)
+library(ggplot2)
+library(ggpubr)
+library(RColorBrewer)
+library(huxtable)
+library(class)
+library(factoextra)
+library(reshape2)
+library(tidyverse)
+library(ggridges)
+```
+
+## 1. DATASET INFORMATION
+
+The dataset used for the project has been taken from *BankFocus* database at the following link: <https://bankfocus-r1-bvdinfo-com.ezproxy.unicatt.it/version-20230119-3417-1/bankfocus/1/Companies/dashboard/Index?refreshTopPos=0&format=_standard&BookSection=PROFILE&uniqueId=True>.
+
+```{r}
+# load dataset
+C2_2016 <- read_excel("C:/Users/debby/OneDrive/Desktop/UniCatt/1st Y/Banking/1st_Assignment/C2_2016.xlsx", 
+    sheet = "Results")
+C2_2017 <- read_excel("C:/Users/debby/OneDrive/Desktop/UniCatt/1st Y/Banking/1st_Assignment/C2_2017.xlsx", 
+    sheet = "Results")
+C2_2018 <- read_excel("C:/Users/debby/OneDrive/Desktop/UniCatt/1st Y/Banking/1st_Assignment/C2_2018.xlsx", 
+    sheet = "Results")
+C2_2019 <- read_excel("C:/Users/debby/OneDrive/Desktop/UniCatt/1st Y/Banking/1st_Assignment/C2_2019.xlsx", 
+    sheet = "Results")
+C2_2020 <- read_excel("C:/Users/debby/OneDrive/Desktop/UniCatt/1st Y/Banking/1st_Assignment/C2_2020.xlsx", 
+    sheet = "Results")
+C2_2021 <- read_excel("C:/Users/debby/OneDrive/Desktop/UniCatt/1st Y/Banking/1st_Assignment/C2_2021.xlsx", 
+    sheet = "Results")
+```
+
+```{r}
+# column names of the dataset
+colnames(C2_2016)
+```
+
+In order to better visualize the data, we decide to *change* the column names of each dataset, according to their meaning:
+
+```{r}
+# change the column names
+colnames(C2_2016) <- c("company", "country", "consolidation_code", "specialisation", "RWAs", "RWAs_over_totAssets", "totEquity_over_RWAs", "totEquity_over_totAssets", "totAssets", "totEquity", "Basel3_leverage_ratio", "Tier1", "Tier1_ratio", "Tier2", "level3assets_over_CET1", "commonEquity_over_coreTier1_ratio", "commonEquity", "retainedEarnings", "otherComprIncome", "RWAs_growth", "CET1_growth", "commonEquity_over_CET1", "totCapRatio")
+colnames(C2_2017) <- c("company", "country", "consolidation_code", "specialisation", "RWAs", "RWAs_over_totAssets", "totEquity_over_RWAs", "totEquity_over_totAssets", "totAssets", "totEquity", "Basel3_leverage_ratio", "Tier1", "Tier1_ratio", "Tier2", "level3assets_over_CET1", "commonEquity_over_coreTier1_ratio", "commonEquity", "retainedEarnings", "otherComprIncome", "RWAs_growth", "CET1_growth", "commonEquity_over_CET1", "totCapRatio")
+colnames(C2_2018) <- c("company", "country", "consolidation_code", "specialisation", "RWAs", "RWAs_over_totAssets", "totEquity_over_RWAs", "totEquity_over_totAssets", "totAssets", "totEquity", "Basel3_leverage_ratio", "Tier1", "Tier1_ratio", "Tier2", "level3assets_over_CET1", "commonEquity_over_coreTier1_ratio", "commonEquity", "retainedEarnings", "otherComprIncome", "RWAs_growth", "CET1_growth", "commonEquity_over_CET1", "totCapRatio")
+colnames(C2_2019) <- c("company", "country", "consolidation_code", "specialisation", "RWAs", "RWAs_over_totAssets", "totEquity_over_RWAs", "totEquity_over_totAssets", "totAssets", "totEquity", "Basel3_leverage_ratio", "Tier1", "Tier1_ratio", "Tier2", "level3assets_over_CET1", "commonEquity_over_coreTier1_ratio", "commonEquity", "retainedEarnings", "otherComprIncome", "RWAs_growth", "CET1_growth", "commonEquity_over_CET1", "totCapRatio")
+colnames(C2_2020) <- c("company", "country", "consolidation_code", "specialisation", "RWAs", "RWAs_over_totAssets", "totEquity_over_RWAs", "totEquity_over_totAssets", "totAssets", "totEquity", "Basel3_leverage_ratio", "Tier1", "Tier1_ratio", "Tier2", "level3assets_over_CET1", "commonEquity_over_coreTier1_ratio", "commonEquity", "retainedEarnings", "otherComprIncome", "RWAs_growth", "CET1_growth", "commonEquity_over_CET1", "totCapRatio")
+colnames(C2_2021) <- c("company", "country", "consolidation_code", "specialisation", "RWAs", "RWAs_over_totAssets", "totEquity_over_RWAs", "totEquity_over_totAssets", "totAssets", "totEquity", "Basel3_leverage_ratio", "Tier1", "Tier1_ratio", "Tier2", "level3assets_over_CET1", "commonEquity_over_coreTier1_ratio", "commonEquity", "retainedEarnings", "otherComprIncome", "RWAs_growth", "CET1_growth", "commonEquity_over_CET1", "totCapRatio")
+```
+
+Let's explain the **characteristic** of each variable:
+
+-   ***company*** : company name Latin alphabet
+
+-   ***country*** : country where company is domiciled (Euro area)
+
+-   ***consolidation_code*** : attribute used to group similar object levels into categories for reporting
+
+    -   *C1 :* statement of a mother bank integrating the statements of its controlled subsidiaries or branches with no unconsolidated companion
+    -   *C2 :* statement of a mother bank integrating the statements of its controlled subsidiaries or branches with an unconsolidated
+    -   *U1 :* statement not integrating the statements of the possible controlled subsidiaries or branches of the concerned bank with no consolidated companion.
+    -   *U2 :* statement not integrating the statements of the possible controlled subsidiaries or branches of the concerned bank with an consolidated companion.
+
+-   ***specialization*** :
+
+    -   *Commercial banks :* offer basic banking services, including deposit accounts and loans, to consumers and small to midsize businesses;
+    -   *Investment banks :* specialize in managing complex financial transactions such as IPOs and mergers for corporate clients.
+
+-   ***RWAs*** : Other risk-weighted assets (RWAs)
+
+-   ***RWAs_over_totAssets*** : Risk weighted asset intensity (RWA / Total Assets) (%)
+
+-   ***totEquity_over_RWAs*** : Total equity / Risk-weighted assets (RWAs) (%)
+
+-   ***totAssets*** : Total Assets
+
+-   ***totEquity*** : Total Equity
+
+-   ***Basel3_leverage_ratio*** : Basel III leverage ratio (%)
+
+-   ***Tier1*** : Tier 1 Capital
+
+-   ***Tier1_ratio*** : Tier 1 ratio (%)
+
+-   ***Tier2*** : Tier 2
+
+-   ***level3assets_over_CET1*** : Level 3 assets / Common Equity Tier 1 (CET1) capital
+
+-   ***totEquity_over_RWAs*** : Total equity / Risk-weighted assets (RWAs) (%)
+
+-   ***commonEquity_over_coreTier1_ratio*** : Common Equity / Core Tier 1 ratio (Basel III) (%)
+
+-   ***commonEquity*** : Common Equity
+
+-   ***retainedEarnings*** : Retained Earnings
+
+-   ***otherComprIncome*** : Other Comprehensive Income
+
+-   ***RWAs_growth*** : Growth in Risk Weighted Assets (%)
+
+-   ***CET1_growth*** : Growth in CET1 (%)
+
+-   ***commonEquity_over_CET1*** : Common Equity / Core Tier 1
+
+-   ***totCapRatio*** : Total Capital Ratio.
+
+The first step of our analysis include *filtering* our data and *choosing* the [consolidation]{.underline} [code]{.underline} that would provide us the best sample of accounts. Considering the time frame 2016 - 2021, we inspect the observations based on the assessment of three main accounts: ***Revenue***, ***Total Assets*** and ***Equity*** capital. By calculating the total amount of each account, we notice that the banks presenting the consolidated accounts with an unconsolidated companion, show the ***greatest*** results in the *size* assessment. For this reason, we decide to filter our data by considering the **C2** Consolidation Code. Regarding the specialisation, we decide to focus our analysis on the most common type of institutions, which are ***Commercial*** and ***Investment*** banks.
+
+### *1.1. VARIABLE CLASSIFICATION*
+
+```{r}
+# list types for each attribute
+sapply(C2_2016, class)
+```
+
+We can observe that each dataset consists of about **17.4%** *nominal* attributes, while the remaining **82.6%** represents the *continuous* ones.
+
+### *1.2. DATA CLEANING*
+
+```{r}
+# inspect each dataset
+glimpse(C2_2016)
+```
+
+In order to better visualize the data, we need to transform the *numeric* features into *double* variables and the *character* attributes into *factor* ones:
+
+```{r}
+data_16 <- C2_2016 %>% 
+  # from numeric to double
+  mutate_if(is.numeric, as.double) %>%
+  dplyr::select(RWAs, RWAs_over_totAssets, totEquity_over_RWAs, totEquity_over_totAssets,
+                totAssets, totEquity, Basel3_leverage_ratio, Tier1, Tier1_ratio, Tier2, 
+                level3assets_over_CET1, commonEquity_over_coreTier1_ratio, commonEquity, 
+                retainedEarnings, otherComprIncome, RWAs_growth, CET1_growth,
+                commonEquity_over_CET1, totCapRatio, everything()) %>% 
+  # from character to factor
+  mutate_if(is.character, as.factor) %>% 
+  dplyr::select(company, country, consolidation_code, specialisation, everything())
+
+data_17 <- C2_2017 %>% 
+  # from numeric to double
+  mutate_if(is.numeric, as.double) %>%
+  dplyr::select(RWAs, RWAs_over_totAssets, totEquity_over_RWAs, totEquity_over_totAssets,
+                totAssets, totEquity, Basel3_leverage_ratio, Tier1, Tier1_ratio, Tier2, 
+                level3assets_over_CET1, commonEquity_over_coreTier1_ratio, commonEquity, 
+                retainedEarnings, otherComprIncome, RWAs_growth, CET1_growth,
+                commonEquity_over_CET1, totCapRatio, everything()) %>% 
+  # from character to factor
+  mutate_if(is.character, as.factor) %>% 
+  dplyr::select(company, country, consolidation_code, specialisation, everything())
+
+data_18 <- C2_2018 %>% 
+  # from numeric to double
+  mutate_if(is.numeric, as.double) %>%
+  dplyr::select(RWAs, RWAs_over_totAssets, totEquity_over_RWAs, totEquity_over_totAssets,
+                totAssets, totEquity, Basel3_leverage_ratio, Tier1, Tier1_ratio, Tier2, 
+                level3assets_over_CET1, commonEquity_over_coreTier1_ratio, commonEquity, 
+                retainedEarnings, otherComprIncome, RWAs_growth, CET1_growth,
+                commonEquity_over_CET1, totCapRatio, everything()) %>% 
+  # from character to factor
+  mutate_if(is.character, as.factor) %>% 
+  dplyr::select(company, country, consolidation_code, specialisation, everything())
+
+data_19 <- C2_2019 %>% 
+  # from numeric to double
+  mutate_if(is.numeric, as.double) %>%
+  dplyr::select(RWAs, RWAs_over_totAssets, totEquity_over_RWAs, totEquity_over_totAssets,
+                totAssets, totEquity, Basel3_leverage_ratio, Tier1, Tier1_ratio, Tier2, 
+                level3assets_over_CET1, commonEquity_over_coreTier1_ratio, commonEquity, 
+                retainedEarnings, otherComprIncome, RWAs_growth, CET1_growth,
+                commonEquity_over_CET1, totCapRatio, everything()) %>% 
+  # from character to factor
+  mutate_if(is.character, as.factor) %>% 
+  dplyr::select(company, country, consolidation_code, specialisation, everything())
+
+data_20 <- C2_2020 %>% 
+  # from numeric to double
+  mutate_if(is.numeric, as.double) %>%
+  dplyr::select(RWAs, RWAs_over_totAssets, totEquity_over_RWAs, totEquity_over_totAssets,
+                totAssets, totEquity, Basel3_leverage_ratio, Tier1, Tier1_ratio, Tier2, 
+                level3assets_over_CET1, commonEquity_over_coreTier1_ratio, commonEquity, 
+                retainedEarnings, otherComprIncome, RWAs_growth, CET1_growth,
+                commonEquity_over_CET1, totCapRatio, everything()) %>% 
+  # from character to factor
+  mutate_if(is.character, as.factor) %>% 
+  dplyr::select(company, country, consolidation_code, specialisation, everything())
+
+data_21 <- C2_2021 %>% 
+  # from numeric to double
+  mutate_if(is.numeric, as.double) %>%
+  dplyr::select(RWAs, RWAs_over_totAssets, totEquity_over_RWAs, totEquity_over_totAssets,
+                totAssets, totEquity, Basel3_leverage_ratio, Tier1, Tier1_ratio, Tier2, 
+                level3assets_over_CET1, commonEquity_over_coreTier1_ratio, commonEquity, 
+                retainedEarnings, otherComprIncome, RWAs_growth, CET1_growth,
+                commonEquity_over_CET1, totCapRatio, everything()) %>% 
+  # from character to factor
+  mutate_if(is.character, as.factor) %>% 
+  dplyr::select(company, country, consolidation_code, specialisation, everything())
+```
+
+## 2. MISSING VALUES ANALYSIS
+
+We decide to perform an initial analysis by considering one dataset per time to evaluate how many *missing* values they contain. According to the results, we can better understand whether our sample can be considered as a good *representation* of the population, in order to do an analysis which is the closest as possible to the reality.
+
+### *2.1. 2016 y*
+
+The *2016* dataset is composed of **215** instances and **23** attributes.
+
+```{r}
+head(data_16)
+```
+
+```{r}
+# Overview of dataset
+plot_intro(data_16, title = "Dataset Information (2016)")
+```
+
+By inspecting the BarPlot, we can infer that the dataset presents about ***26.5%*** of *missing* observations, but it does *not* contains any missing columns.
+
+Let's analyzing the dataset more in details, inspecting whether the data are *missing* or not, and providing the *amount* of missing observations in each column:
+
+```{r}
+# Missing vs Presence
+vis_miss(data_16) +
+  labs(y = "Number of observations") + 
+  ggtitle("Analysis of Presence and Absence Values (2016)") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+
+# % of Missing Values
+gg_miss_var(data_16, show_pct = TRUE) + 
+  ggtitle("% of Missing Values (2016)") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+```
+
+We can notice that the features that contain ***most*** of the missing observations are: [RWAs]{.underline} (**86%**), [Tier2]{.underline} (**85%**), [Basel3_leverage_ratio]{.underline} (**78%**) and [commonEquity_over_coreTier1_ratio]{.underline} (**73%**). Then, we have the level3assets_over_CET1 (*45%*), CET1_growth (*38%*), RWAs_growth (*37%*), commonEquity_over_CET1 (*28%*), totEquity_over_RWAs (*25%*), RWAs_over_totAssets (*25%*), otherComprIncome (*25%*), Tier1_ratio (*23%*), Tier1 (*21%*), totCapRatio (*16.5%*), retainedEarnings (*4%*) and commonEquity (*1%*). The remaining variables do *not* have any missing values.
+
+Now, it could be interested inspecting the *combinations* of missing observations across variables:
+
+```{r}
+# Intersection of Missing Values
+gg_miss_upset(C2_2016, nsets = n_var_miss(C2_2016))
+```
+
+### *2.2. 2017 y*
+
+The *2017* dataset is composed of **219** instances and **23** attributes.
+
+```{r}
+# Overview of dataset
+plot_intro(data_17, title = "Dataset Information (2017)")
+```
+
+By inspecting the BarPlot, we can infer that the dataset presents about ***26.8%*** of *missing* observations, but it does *not* contains any missing columns.
+
+Let's analyzing the dataset more in details, inspecting whether the data are *missing* or not, and providing the *amount* of missing observations in each column:
+
+```{r}
+# Missing vs Presence
+vis_miss(data_17) +
+  labs(y = "Number of observations") + 
+  ggtitle("Analysis of Presence and Absence Values (2017)") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+
+# % of Missing Values
+gg_miss_var(data_17, show_pct = TRUE) + 
+  ggtitle("% of Missing Values (2017)") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+```
+
+We can notice that the features that contain ***most*** of the missing observations are: [Tier2]{.underline} (**81%**), [RWAs]{.underline} (**80%**), [Basel3_leverage_ratio]{.underline} (**78%**) and [commonEquity_over_coreTier1_ratio]{.underline} (**68%**). Then, we have the level3assets_over_CET1 (*49%*), CET1_growth (*42%*), RWAs_growth (*40%*), commonEquity_over_CET1 (*28%*), totEquity_over_RWAs (*26%*), RWAs_over_totAssets (*26%*), otherComprIncome (*26%*), Tier1 (*24%*), Tier1_ratio (*23%*), totCapRatio (*18%*), retainedEarnings (*5%*) and commonEquity (*1%*). The remaining variables do *not* have any missing values.
+
+Now, it could be interested inspecting the *combinations* of missing observations across variables:
+
+```{r}
+# Intersection of Missing Values
+gg_miss_upset(data_17, nsets = n_var_miss(C2_2017))
+```
+
+### *2.3. 2018 y*
+
+The *2018* dataset is composed of **217** instances and **23** attributes.
+
+```{r}
+# Overview of dataset
+plot_intro(data_18, title = "Dataset Information (2018)")
+```
+
+By inspecting the BarPlot, we can infer that the dataset presents about ***24.9%*** of *missing* observations, but it does *not* contains any missing columns.
+
+Let's analyze the dataset more in details, inspecting whether the data are *missing* or not, and providing the *amount* of missing observations in each column:
+
+```{r}
+# Missing vs Presence
+vis_miss(data_18) +
+  labs(y = "Number of observations") + 
+  ggtitle("Analysis of Presence and Absence Values (2018)") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+
+# % of Missing Values
+gg_miss_var(data_18, show_pct = TRUE) + 
+  ggtitle("% of Missing Values (2018)") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+```
+
+We can notice that the features that contain ***most*** of the missing observations are: [Tier2]{.underline} (**80%**), [RWAs]{.underline} (**77%**), [Basel3_leverage_ratio]{.underline} (**73%**) and [commonEquity_over_coreTier1_ratio]{.underline} (**65%**). Then, we have the level3assets_over_CET1 (*44%*), CET1_growth (*38%*), RWAs_growth (*34%*), commonEquity_over_CET1 (*25%*), totEquity_over_RWAs (*24%*), RWAs_over_totAssets (*24%*), otherComprIncome (*24%*), Tier1 (*22%*), Tier1_ratio (*22%*), totCapRatio (*17%*), retainedEarnings (*3%*) and commonEquity (*1%*). The remaining variables do *not* have any missing values.
+
+Now, it could be interested inspecting the *combinations* of missing observations across variables:
+
+```{r}
+# Intersection of Missing Values
+gg_miss_upset(data_18, nsets = n_var_miss(data_18))
+```
+
+### *2.4. 2019 y*
+
+The *2019* dataset is composed of **216** instances and **23** attributes.
+
+```{r}
+# Overview of dataset
+plot_intro(data_19, title = "Dataset Information (2019)")
+```
+
+By inspecting the BarPlot, we can infer that the dataset presents about ***24.5%*** of *missing* observations, but it does *not* contains any missing columns.
+
+Let's analyze the dataset more in details, inspecting whether the data are *missing* or not, and providing the *amount* of missing observations in each column:
+
+```{r}
+# Missing vs Presence
+vis_miss(data_19) +
+  labs(y = "Number of observations") + 
+  ggtitle("Analysis of Presence and Absence Values (2019)") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+
+# % of Missing Values
+gg_miss_var(data_19, show_pct = TRUE) + 
+  ggtitle("% of Missing Values (2019)") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+```
+
+We can notice that the features that contain ***most*** of the missing observations are: [Tier2]{.underline} (**78%**), [RWAs]{.underline} (**78%**), [Basel3_leverage_ratio]{.underline} (**73%**) and [commonEquity_over_coreTier1_ratio]{.underline} (**67%**). Then, we have the level3assets_over_CET1 (*42%*), CET1_growth (*31%*), RWAs_growth (*31%*), commonEquity_over_CET1 (*26%*), totEquity_over_RWAs (*25%*), RWAs_over_totAssets (*25%*), otherComprIncome (*23%*), Tier1 (*22%*), Tier1_ratio (*22%*), totCapRatio (*18%*) and retainedEarnings (*3%*). The remaining variables do *not* have any missing values.
+
+Now, it could be interested inspecting the *combinations* of missing observations across variables:
+
+```{r}
+# Intersection of Missing Values
+gg_miss_upset(data_19, nsets = n_var_miss(data_19))
+```
+
+### *2.5. 2020 y*
+
+The *2020* dataset is composed of **215** instances and **23** attributes.
+
+```{r}
+# Overview of dataset
+plot_intro(data_20, title = "Dataset Information (2020)")
+```
+
+By inspecting the BarPlot, we can infer that the dataset presents about ***24.2%*** of *missing* observations, but it does *not* contains any missing columns.
+
+Let's analyze the dataset more in details, inspecting whether the data are *missing* or not, and providing the *amount* of missing observations in each column:
+
+```{r}
+# Missing vs Presence
+vis_miss(data_20) +
+  labs(y = "Number of observations") + 
+  ggtitle("Analysis of Presence and Absence Values (2020)") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+
+# % of Missing Values
+gg_miss_var(data_20, show_pct = TRUE) + 
+  ggtitle("% of Missing Values (2020)") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+```
+
+We can notice that the features that contain ***most*** of the missing observations are: [Tier2]{.underline} (**80%**), [RWAs]{.underline} (**77%**), [Basel3_leverage_ratio]{.underline} (**77%**) and [commonEquity_over_coreTier1_ratio]{.underline} (**70%**). Then, we have the level3assets_over_CET1 (*39%*), CET1_growth (*30%*), RWAs_growth (*29%*), commonEquity_over_CET1 (*24%*), totEquity_over_RWAs (*24%*), RWAs_over_totAssets (*24%*), otherComprIncome (*21%*), Tier1 (*21%*), Tier1_ratio (*21%*), totCapRatio (*17%*) and retainedEarnings (*3%*). The remaining variables do *not* have any missing values.
+
+Now, it could be interested inspecting the *combinations* of missing observations across variables:
+
+```{r}
+# Intersection of Missing Values
+gg_miss_upset(data_20, nsets = n_var_miss(data_20))
+```
+
+### *2.6. 2021 y*
+
+The *2021* dataset is composed of **207** instances and **23** attributes.
+
+```{r}
+# Overview of dataset
+plot_intro(data_21, title = "Dataset Information (2021)")
+```
+
+By inspecting the BarPlot, we can infer that the dataset presents about ***23.3%*** of *missing* observations, but it does *not* contains any missing columns.
+
+Let's analyze the dataset more in details, inspecting whether the data are *missing* or not, and providing the *amount* of missing observations in each column:
+
+```{r}
+# Missing vs Presence
+vis_miss(data_21) +
+  labs(y = "Number of observations") + 
+  ggtitle("Analysis of Presence and Absence Values (2021)") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+
+# % of Missing Values
+gg_miss_var(data_21, show_pct = TRUE) + 
+  ggtitle("% of Missing Values (2021)") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+```
+
+We can notice that the features that contain ***most*** of the missing observations are: [Tier2]{.underline} (**79%**), [RWAs]{.underline} (**78%**), [Basel3_leverage_ratio]{.underline} (**72%**) and [commonEquity_over_coreTier1_ratio]{.underline} (**67%**). Then, we have the level3assets_over_CET1 (*38%*), CET1_growth (*28%*), RWAs_growth (*26%*), totEquity_over_RWAs (*23%*), RWAs_over_totAssets (*23%*), commonEquity_over_CET1 (*22%*), Tier1 (*21%*), Tier1_ratio (*19%*), otherComprIncome (*18%*), totCapRatio (*16%*) and retainedEarnings (*3%*). The remaining variables do *not* have any missing values.
+
+Now, it could be interested inspecting the *combinations* of missing observations across variables:
+
+```{r}
+# Intersection of Missing Values
+gg_miss_upset(data_21, nsets = n_var_miss(data_21))
+```
+
+Inspecting the results, we can conclude that the features containing ***most*** of the missing observations are: [Tier2]{.underline}, [RWAs]{.underline}, [Basel3_leverage_ratio]{.underline} and [commonEquity_over_coreTier1_ratio]{.underline}. However, to perform a more *objective* capitalisation analysis, we decide to manually compute the main ratios *decreasing* the percentage of missing values.
+
+## 3. INTERSECTION (2016 - 2021)
+
+Once we observed that the number of available observations *changes* across the years, we decided to proceed with the capitalisation analysis comparing only the ones that are ***always*** contained in each dataset.
+
+In order to evaluate the *common* features, let's intersect all the datasets (2016 - 2021):
+
+```{r}
+datacommon <- intersect(data_16$company, data_17$company)
+datacommon <- intersect(datacommon, data_18$company)
+datacommon <- intersect(datacommon, data_19$company)
+datacommon <- intersect(datacommon, data_20$company)
+datacommon <- intersect(datacommon, data_21$company)
+```
+
+```{r}
+#DATASET WITH ALL YEARS
+data_16_with_year <- data_16[data_16$company %in% datacommon, ]
+data_17_with_year <- data_17[data_17$company %in% datacommon, ]
+data_18_with_year <- data_18[data_18$company %in% datacommon, ]
+data_19_with_year <- data_19[data_19$company %in% datacommon, ]
+data_20_with_year <- data_20[data_20$company %in% datacommon, ]
+data_21_with_year <- data_21[data_21$company %in% datacommon, ]
+
+data_16_with_year$year <- '2016'
+data_17_with_year$year <- '2017'
+data_18_with_year$year <- '2018'
+data_19_with_year$year <- '2019'
+data_20_with_year$year <- '2020'
+data_21_with_year$year <- '2021'
+
+data_with_years <- rbind(data_16_with_year, data_17_with_year, 
+                         data_18_with_year, data_19_with_year, 
+                         data_20_with_year, data_21_with_year)
+```
+
+Since [RWAs]{.underline} and [Basel3_leverage_ratio]{.underline} have respectively about *80%* and *75%* of missing observations, we decide to compute them manually:
+
+```{r}
+#DATA MANAGEMENT
+
+#Compute Basel III Leverage Ratio
+data_with_years <- data_with_years %>% 
+  mutate(Basel3_leverageRatio_comp = Tier1/totAssets*100)
+
+#If data is available in original dataset but missing in computed, saved original one
+for(i in 1:1098){
+  if((is.na(data_with_years[i,]$Basel3_leverage_ratio) == FALSE) & (is.na(data_with_years[i,]$Basel3_leverageRatio_comp) == TRUE)){
+    data_with_years[i,]$Basel3_leverageRatio_comp <- data_with_years[i,]$Basel3_leverage_ratio
+  }
+}
+
+#Compute RWAs from RWAs over Tot Assets
+data_with_years <- data_with_years %>% mutate(RWAS_comp = RWAs_over_totAssets*totAssets/100)
+data_with_years <- data_with_years[, -c(5,11)]
+
+#Compute CET1 Ratio (Common Equity / RWAs)
+data_with_years <- data_with_years %>% mutate(CET1_ratio = commonEquity/RWAS_comp*100) 
+
+#GENERIC
+data_all_year_group_year <- data_with_years %>% group_by(year)
+#SIZE
+data_with_years$size <- cut(data_all_year_group_year$totAssets, quantile(data_all_year_group_year$totAssets),
+                            include.lowest = TRUE, labels=c("Very small","Small","Medium", "Large"))
+data_all_year_group_size <- data_with_years %>% group_by(year, size)
+#COUNTRY
+data_all_year_group_country <- data_with_years %>% group_by(year, country)
+#SPECIALISATION
+data_all_year_group_specialization <- data_with_years %>% group_by(year, specialisation)
+```
+
+```{r}
+# DATASET INFORMATION
+plot_intro(data_with_years, title = "Dataset Information (2016 - 2021)")
+
+# % of Missing Values
+gg_miss_var(data_with_years, show_pct = TRUE) + 
+  ggtitle("% of Missing Values (2016 - 2021)") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+```
+
+By inspecting the BarPlot, we can infer that the dataset presents about ***17.4%*** of *missing* values, which is ***lower*** than the previous results. Also in this case, we can notice that the features that contain ***most*** of the missing observations are [Tier2]{.underline} (**79%**) and [commonEquity_over_coreTier1_ratio]{.underline} (**66%**). However, the percentage of missing values in attributes [RWAs_comp]{.underline} and [Basel3_leverageRatio_comp]{.underline} is drastically *reduced*.
+
+### 3.1. GENERIC ANALYSIS
+
+We decide to perform a a *generic* capitalization analysis firstly, and then continue with splitting the analysis according to three factors:
+
+-   ***Specialisation***
+
+-   ***Country***
+
+-   ***Size***.
+
+Once we analyzed the behavior of the main accounts such as *Total Equity*, *Total Assets*, *Retained Earnings* and *Other Comprehensive Income*, we decide to proceed by evaluating the:
+
+-   ***Basel III Leverage Ratio***, in order to assess the ability of a company to *meet* its financial obligations;
+
+-   ***TIER1 Ratio***, revealing the ability to *absorb* a reasonable amount of losses *without* risk of failure;
+
+-   ***Total Capital Ratio***, showing the *stability* and *efficiency* of the bank's financial system;
+
+-   ***CET1 Ratio***, meaning the ability of a bank to *withstand* financial distress.
+
+```{r}
+#GENERIC
+
+#EQUITY
+ggplot(data_all_year_group_year %>% summarise(totEquity = mean(totEquity, na.rm = TRUE)), aes(x = year, y = totEquity)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "orange", fill = "bisque") +
+  labs(title = "Average of Total Equity (2016 - 2021)", x = "Year", y = "Average Total Equity") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#ASSETS
+ggplot(data_all_year_group_year %>% summarise(totAssets = mean(totAssets, na.rm = TRUE)), aes(x = year, y = totAssets)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "deepskyblue3", fill = "darkslategray2") +
+  labs(title = "Average of Total Assets (2016 - 2021)", x = "Year", y = "Average Total Assets") +
+  theme(plot.title = element_text(hjust = 0.5))  
+
+#RETAINED EARNINGS
+ggplot(data_all_year_group_year %>% summarise(retainedEarnings = mean(retainedEarnings, na.rm = TRUE)), 
+       aes(x = year, y = retainedEarnings)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "forestgreen", fill = "lightgreen") +
+  labs(title = "Average of Retained Earnings (2016 - 2021)", x = "Year", y = "Average Retained Earnings") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#OTHER COMPREHENSIVE INCOME
+ggplot(data_all_year_group_year %>% summarise(otherComprIncome = mean(otherComprIncome, na.rm = TRUE)), 
+       aes(x = year, y = otherComprIncome)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "pink3", fill = "rosybrown1") +
+  labs(title = "Average of Other Comprehesinve Income (2016 - 2021)", x = "Year", y = "Average Other Comprehensive Income") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+Inspecting the graphs we can infer that the mean value of the [total equity]{.underline}, [total assets]{.underline} and [retained earnings]{.underline} *increases* across the years. Otherwise, the graph representing the [other comprehensive income]{.underline} is the only one that presents a different behavior: 2019 and 2020 are the years in which the mean value is *positive*, while the lowest average amount is reached in 2018.
+
+To analyze the *capitalization* throughout this period it is worth taking a look at the following graphs showing the mean value for the regulatory ratios from ***Basel III*** that have been implement in the European Union through the [CRR]{.underline} (Capital Requirements Regulation) and the [CRD]{.underline} (Capital requirements Directive). They can also be considered as a type of index for assessing the capitalization of a bank.
+
+#### *3.1.1. BASEL III LEVERAGE RATIO*
+
+```{r}
+#LEVERAGE MEAN (Tier1/Tot Assets)
+ggplot(data_all_year_group_year %>% summarise(Basel3_leverageRatio_comp= mean(Basel3_leverageRatio_comp, na.rm = TRUE)), 
+       aes(x = year, y = Basel3_leverageRatio_comp)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "darkorchid4", fill = "plum") +
+  geom_hline(aes(yintercept = 3), colour = "deeppink") +
+  labs(title = "Average of Basel III Leverage Ratio (2016 - 2021)", x = "Year", y = "Average Basel III Leverage Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graph, we can notice that on average the observations in our sample do *satisfy* the Basel III requirements regarding the Leverage Ratio. In addition, they seem having a lot of additional buffers to *absorb* losses in case of financial distress. Nevertheless we shall also consider the presence of variation within our sample:
+
+```{r}
+#LEVERAGE VARIANCE
+ggplot(data_all_year_group_year %>% summarise(Basel3_leverageRatio_comp = var(Basel3_leverageRatio_comp, na.rm = TRUE)), 
+       aes(x = year, y = Basel3_leverageRatio_comp)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "darkorchid4", fill = "plum") +
+  labs(title = "Variance of Basel III Leverage Ratio (2016 - 2021)", x = "Year", y = "Variance Basel III Leverage Ratio") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#LEVERAGE BOXPLOT
+ggplot(data_all_year_group_year, aes(x=year, y=Basel3_leverageRatio_comp)) + 
+  geom_boxplot(color = "darkorchid4") +
+  labs(title = "Boxplot of Basel III Leverage Ratio (2016 - 2021)", x = "Year", y = "Basel III Leverage Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+By looking at the graph of the variance and the associated boxplot, we can notice that the [highest]{.underline} *variance* is reached in 2020 and 2018, due to the presence of *outliers*.
+
+#### *3.1.2. TIER1 RATIO*
+
+```{r}
+#TIER 1 MEAN
+ggplot(data_all_year_group_year %>% summarise(Tier1_ratio = mean(Tier1_ratio, na.rm = TRUE)), 
+       aes(x = year, y = Tier1_ratio)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "olivedrab4", fill = "olivedrab1") +
+  geom_hline(aes(yintercept = 6), colour = "forestgreen") +
+  labs(title = "Average of Tier 1 Ratio (2016 - 2021)", x = "Year", y = "Average Tier 1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graph, we can infer that the banks' financial *strength* of our sample [increases]{.underline} across the years. Moreover, on average the observations in our dataset do *satisfy* the minimum threshold regarding the Tier1 Ratio.
+
+```{r}
+#TIER1 VARIANCE
+ggplot(data_all_year_group_year %>% summarise(Tier1_ratio = var(Tier1_ratio, na.rm = TRUE)), 
+       aes(x = year, y = Tier1_ratio)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "olivedrab4", fill = "olivedrab1") +
+  labs(title = "Variance of Tier 1 Ratio (2016 - 2021)", x = "Year", y = "Variance Tier 1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#TIER 1 BOXPLOT
+ggplot(data_all_year_group_year, aes(x=year, y=Tier1_ratio)) + 
+  geom_boxplot(color = "olivedrab4") +
+  labs(title = "Boxplot of Tier 1 Ratio (2016 - 2021)", x = "Year", y = "Tier 1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+By looking at the graph of the variance and the associated boxplot, we can notice that also the *variance* [increases]{.underline} across the years, with the excpetion of 2017 showing a slight drop. The [greatest]{.underline} *variance* is reached in 2021 with a value that is twice the one of 2018. This behavior is mainly due to the presence of *outliers*.
+
+#### *3.1.3. TOTAL CAPITAL RATIO*
+
+```{r}
+#TOT CAP MEAN
+ggplot(data_all_year_group_year %>% summarise(totCapRatio = mean(totCapRatio, na.rm = TRUE)), 
+       aes(x = year, y = totCapRatio)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "thistle4", fill = "thistle") +
+  geom_hline(aes(yintercept = 8), colour = "purple") +
+  labs(title = "Average of Total Capital Ratio (2016 - 2021)", x = "Year", y = "Average Tot Capital Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+As the previous ratios, we can infer that the *stability* of the banks' financial system [increases]{.underline} across the years. Moreover, on average the observations in our sample do *satisfy* the minimum threshold regarding the Total Capital Ratio.
+
+```{r}
+#TOT CAP VARIANCE
+ggplot(data_all_year_group_year %>% summarise(totCapRatio = var(totCapRatio, na.rm = TRUE)), 
+       aes(x = year, y = totCapRatio)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "thistle4", fill = "thistle") +
+  labs(title = "Variance of Total Capital Ratio (2016 - 2021)", x = "Year", y = "Variance Tot Capital Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#TOT CAP BOXPLOT
+ggplot(data_all_year_group_year, aes(x=year, y=totCapRatio)) + 
+  geom_boxplot(color = "thistle4") +
+  labs(title = "Boxplot of Total Capital Ratio (2016 - 2021)", x = "Year", y = "Tot Capital Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+By looking at the graph of the variance and the associated boxplot, we can notice that also the *variance* [increases]{.underline} across the years, with the excpetion of 2017 showing a slight drop. The [greatest]{.underline} *variance* is reached in 2021 with a value that is twice the one of 2018. This behavior is mainly due to the presence of *outliers*.
+
+#### *3.1.4. CET1 RATIO*
+
+```{r}
+#CET1 MEAN
+ggplot(data_all_year_group_year %>% summarise(CET1_ratio = mean(CET1_ratio, na.rm = TRUE)), 
+       aes(x = year, y = CET1_ratio)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "darkgoldenrod3", fill = "darkgoldenrod1") +
+  geom_hline(aes(yintercept = 4.5), colour = "darkolivegreen4") +
+  labs(title = "Average of CET1 Ratio (2016 - 2021)", x = "Year", y = "Average CET1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graph, we can observe that the scenario is slightly *different* than the previous ones: the mean value of Common Equity Tier1 Ratio appears [constant]{.underline}, with the exception of the years 2018 and 2020, where the average value is *greater*. Moreover, on average the observations in our sample do *satisfy* the minimum threshold regarding the CET1 Ratio.
+
+```{r}
+#CET1 VARIANCE
+ggplot(data_all_year_group_year %>% summarise(CET1_ratio = var(CET1_ratio, na.rm = TRUE)), 
+       aes(x = year, y = CET1_ratio)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "darkgoldenrod3", fill = "darkgoldenrod1") +
+  labs(title = "Variance of CET1 Ratio (2016 - 2021)", x = "Year", y = "Variance CET1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#CET1 BOXPLOT
+ggplot(data_all_year_group_year, aes(x=year, y=CET1_ratio)) + 
+  geom_boxplot(color = "darkgoldenrod1") +
+  labs(title = "Boxplot of CET1 Ratio (2016 - 2021)", x = "Year", y = "CET1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+By looking at the graph of the variance and the associated boxplot, we can notice that the *variance* seems [increasing]{.underline} across the years, with the excpetion of 2019 and 2021 showing a slight drop. The [greatest]{.underline} *variance* is reached in 2020 with a value that is three times the one of 2016. This behavior is mainly due to the presence of *outliers*.
+
+To conclude, by looking at the mean value, we can infer that our observations [satisfy]{.underline} the minimum *threshold*, and appear to be *well* capitalised. However, looking at the variance things change because the greater number of outliers has a huge impact on the mean value.
+
+### 3.2. SPECIALISATION
+
+Banks can be categorized in a variety of ways, according to the different perspectives from which their activities can be observed. Regarding the specialisation, we decide to focus our analysis on the most common type of institutions: ***Commercial*** and ***Investment*** banks.
+
+```{r}
+#BASIC
+ggplot(data_with_years[data_with_years$year=="2016",], aes(x = specialisation, fill = specialisation)) + 
+  geom_bar(width = 0.7, position = "dodge") +
+  geom_text(stat = 'count', aes(label = after_stat(count)), vjust = -0.50, size = 3.2) +
+  labs(x = "Specialisation", y = "Number of banks") + 
+  ggtitle("Analysis of Specialisation (2016 - 2021)") +
+  scale_fill_discrete(guide = "none") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+
+huxtable(Tot_Banks = nrow(data_with_years), Commercial_Banks = sum(data_with_years[data_with_years$year == "2016",]$specialisation == 'Commercial bank'), Investment_Banks = sum(data_with_years[data_with_years$year == "2016",]$specialisation == 'Investment bank'))
+
+#DENSITY
+ggplot(data_with_years, aes(x = totEquity, y = year, fill = specialisation)) +
+  geom_density_ridges(alpha = 0.4) +
+  facet_grid(specialisation ~ .) +
+  theme_ridges() + 
+  labs(x = "Total Equity", y = "Year") +
+  ggtitle("Equity Density across Specialisation (2016 - 2021)") +
+  scale_x_continuous(labels = scales::comma) +
+  theme(plot.title = element_text(hjust = 0.5),legend.position = "none")
+```
+
+The European Banking System is characterized by the multitude of *commercial* banks: inspecting the graph we can observe that **162** financial institutions are *commercial banks* (about *88.5%*), while the remaining **21** organizations are *investment banks* (*11.5%*). One of the reasons behind this result could be the traditional bank credit as a source of funding for households and corporations. Therefore, we also notice the presence of investment banks as a critical infrastructure supporting the growth of large, midsize and small companies in the Euro area.
+
+```{r}
+#EQUITY
+ggplot(data_all_year_group_specialization %>% summarise(totEquity = mean(totEquity, na.rm = TRUE)), 
+       aes(fill = specialisation, y = totEquity, x = year)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  labs(title = "Average of Total Equity (2016 - 2021)", x = "Year", y = "Average Total Equity") +
+  scale_fill_discrete(name = "Specialisation", labels = c("Commercial Bank", "Investment Bank")) +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#ASSETS
+ggplot(data_all_year_group_specialization %>% summarise(totAssets = mean(totAssets, na.rm = TRUE)), 
+       aes(fill = specialisation, y = totAssets, x = year)) + 
+  geom_bar(position = "dodge", stat = "identity") + 
+  labs(title = "Average of Total Assets (2016 - 2021)", x = "Year", y = "Average Total Assets") + 
+  scale_fill_discrete(name = "Specialisation", labels = c("Commercial Bank", "Investment Bank")) +
+  scale_y_continuous(labels = scales::comma) +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#RETAINED EARNINGS
+ggplot(data_all_year_group_specialization %>% summarise(retainedEarnings = mean(retainedEarnings, na.rm = TRUE)), 
+       aes(fill = specialisation, y = retainedEarnings, x = year)) + 
+  geom_bar(position = "dodge", stat = "identity") + 
+  labs(title = "Average of Retained Earnings (2016 - 2021)", x = "Year", y = "Average Retained Earnings") + 
+  scale_fill_discrete(name = "Specialisation", labels = c("Commercial Bank", "Investment Bank")) +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#OTHER COMPREHENSIVE INCOME
+ggplot(data_all_year_group_specialization %>% summarise(otherComprIncome = mean(otherComprIncome, na.rm = TRUE)), 
+       aes(fill = specialisation, y = otherComprIncome, x = year)) + 
+  geom_bar(position = "dodge", stat = "identity") + 
+  labs(title = "Average of Other Comprehesinve Income (2016 - 2021)", x = "Year", y = "Average Other Comprehesinve Income") + 
+  scale_fill_discrete(name = "Specialisation", labels = c("Commercial Bank", "Investment Bank")) +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+Despite the differences in their balance sheets, both investment and commercial banks need to follow the European Banking Regulatory framework that implies a certain level of capital to be kept to prevent insolvency risk. Considering the difference in size, according to the C2 consolidation code, it is pretty intuitive that the mean value of the [total equity]{.underline} and [total assets]{.underline} are ***greater*** for *commercial* banks. However, considering their *size*, we can observe that *investment* banks tend to have a greater [total equity]{.underline} on average.
+
+#### *3.2.1. BASEL III LEVERAGE RATIO*
+
+```{r}
+#LEVERAGE MEAN
+ggplot(data_all_year_group_specialization %>% summarise(Basel3_leverageRatio_comp = mean(Basel3_leverageRatio_comp, na.rm = TRUE)), 
+       aes(fill = specialisation, y = Basel3_leverageRatio_comp, x = year)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Average of Basel III Leverage Ratio (2016 - 2021)", x = "Year", y = "Average Basel III Leverage Ratio") + 
+  scale_fill_brewer(palette = "Set1", name = "Specialisation") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Analysing the leverage ratio, in order to assess the ability of a company to meet its financial obligations, we can infer that *commercial* banks have a pretty [stable]{.underline} behavior, meaning that they have engaged in decreasing their risk weighted assets during the period of 2016-2021. Regarding the *investment* banks, we can notice an [increase]{.underline} of Basel III Leverage Ratio in the first three years and a [decrease]{.underline} in the remaining ones, revealing that in 2019-2021 the financial risk gets lower and the investments may be safer.
+
+```{r}
+#LEVERAGE VARIANCE
+ggplot(data_all_year_group_specialization %>% summarise(Basel3_leverageRatio_comp = var(Basel3_leverageRatio_comp, na.rm = TRUE)), 
+       aes(fill = specialisation, y = Basel3_leverageRatio_comp, x = year)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Variance of Basel III Leverage Ratio (2016 - 2021)", x = "Year", y = "Variance Basel III Leverage Ratio") + 
+  scale_fill_brewer(palette = "Set1", name = "Specialisation") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#LEVERAGE BOXPLOT
+ggplot(data_all_year_group_specialization[data_all_year_group_specialization$year=="2016",], aes(x=specialisation, y=Basel3_leverageRatio_comp)) + 
+  geom_boxplot(color = "darkorchid4") +
+  labs(title = "Boxplot of Basel III Leverage Ratio (2016 - 2021)", x = "Specialisation", y = "Basel III Leverage Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+These results are also confirmed by looking at the graph of the variance and the associated boxplot: in 2018 we see that *investment* banks have a [variation]{.underline} within their observations due to the presence of an outlier. Furthermore, we can conclude that the variances of the commercial and the investment banks follow the behavior of the distribution of the mean value.
+
+#### *3.2.2. TIER1 RATIO*
+
+In order to evaluate the banks' financial *strength*, let's analyze the Tier1 Capital Ratio:
+
+```{r}
+#TIER 1 MEAN
+ggplot(data_all_year_group_specialization %>% summarise(Tier1_ratio = mean(Tier1_ratio, na.rm = TRUE)), 
+       aes(fill = specialisation, y = Tier1_ratio, x = year)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Average of Tier 1 Ratio (2016 - 2021)", x = "Year", y = "Average Tier 1 Ratio") + 
+  scale_fill_brewer(palette = "Paired", name = "Specialisation") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+As in the previous case, we can infer that *commercial* banks have a pretty [stable]{.underline} behavior, trying to maintain constant their core equity capital against the total risk-weighted assets. On the other hand, the *investment* institutions show an [increase]{.underline} in the average of Tier1 Ratio, meaning that across the years they improved the ability to absorb a reasonable amount of losses without risk of failure.
+
+```{r}
+#TIER 1 VARIANCE
+ggplot(data_all_year_group_specialization %>% summarise(Tier1_ratio = var(Tier1_ratio, na.rm = TRUE)), 
+       aes(fill = specialisation, y = Tier1_ratio, x = year)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Variance of Tier 1 Ratio (2016 - 2021)", x = "Year", y = "Variance Tier 1 Ratio") + 
+  scale_fill_brewer(palette = "Paired", name = "Specialisation") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#TIER 1 RATIO BOXPLOT
+ggplot(data_all_year_group_specialization[data_all_year_group_specialization$year=="2016",], aes(x=specialisation, y=Tier1_ratio)) + 
+  geom_boxplot(color = "olivedrab4") +
+  labs(title = "Boxplot of Tier 1 Ratio (2016 - 2021)", x = "Specialisation", y = "Tier 1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+By looking at the graph of the variance and the associated boxplot, we can notice again that in 2018 *investment* banks have a significant [variation]{.underline} within their observations both due to the presence of an outlier and the asymmetric distribution of the value of the ratio.
+
+#### *3.2.3. TOTAL CAPITAL RATIO*
+
+```{r}
+#TOT CAP MEAN
+ggplot(data_all_year_group_specialization %>% summarise(totCapRatio = mean(totCapRatio, na.rm = TRUE)), 
+       aes(fill = specialisation, y = totCapRatio, x = year)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Average of Total Capital Ratio (2016-2021)", x = "Year", y = "Average Total Capital Ratio") + 
+  scale_fill_brewer(palette = "Dark2", name = "Specialisation") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graphs of Total Capital Ratio, we can confirmed the previous analysis: *commercial* banks have a pretty [stable]{.underline} behavior, trying to maintain constant their capital against the total risk-weighted assets. Otherwise, the *investment* institutions show an [increase]{.underline} in the average of Total Capital Ratio, meaning that across the years they improved the stability and efficiency of their financial system.
+
+```{r}
+#TOT CAP VARIANCE
+ggplot(data_all_year_group_specialization %>% summarise(totCapRatio = var(totCapRatio, na.rm = TRUE)), 
+       aes(fill = specialisation, y = totCapRatio, x = year)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Variance of Total Capital Ratio (2016-2021)", x = "Year", y = "Variance Total Capital Ratio") + 
+  scale_fill_brewer(palette = "Dark2", name = "Specialisation") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#TOT CAP RATIO BOXPLOT
+ggplot(data_all_year_group_specialization[data_all_year_group_specialization$year=="2016",], aes(x=specialisation, y=totCapRatio)) + 
+  geom_boxplot(color = "thistle4") +
+  labs(title = "Boxplot of Total Capital Ratio (2016 - 2021)", x = "Specialisation", y = "Tot Capital Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+By looking at the graph of the variance and the associated boxplot, we can notice again that in 2018 *investment* banks have a significant [variation]{.underline} within their observations due to the presence of three outliers.
+
+#### *3.2.4. CET1 RATIO*
+
+```{r}
+#CET1 MEAN
+ggplot(data_all_year_group_specialization %>% summarise(CET1_ratio = mean(CET1_ratio, na.rm = TRUE)), 
+       aes(fill = specialisation, y = CET1_ratio, x = year)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Average of CET1 Ratio (2016 - 2021)", x = "Year", y = "CET1 Ratio") +
+  scale_fill_brewer(palette = "Set3", name = "Specialisation") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graphs of the CET1 Ratio according to the specialisation item, we can notice a completely different scenario than all the previous ones. For instance, *investment* banks have a pretty [stable]{.underline} behavior, trying to maintain constant their ability to withstand financial distress. On the other hand, *commercial* institutions show an [increase]{.underline} of CET1 Ratio in the first three years and a [decrease]{.underline} in the remaining ones.
+
+```{r}
+#CET1 VARIANCE
+ggplot(data_all_year_group_specialization %>% summarise(CET1_ratio = var(CET1_ratio, na.rm = TRUE)), 
+       aes(fill = specialisation, y = CET1_ratio, x = year)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Variance of CET1 Ratio (2016 - 2021)", x = "Year", y = "Variance CET1 Ratio") + 
+  scale_fill_brewer(palette = "Set3", name = "Specialisation") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#CET1 RATIO BOXPLOT
+ggplot(data_all_year_group_specialization[data_all_year_group_specialization$year=="2016",], aes(x=specialisation, y=CET1_ratio)) + 
+  geom_boxplot(color = "darkgoldenrod1") +
+  labs(title = "Boxplot of CET1 Ratio (2016 - 2021)", x = "Specialisation", y = "CET1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+These results are also confirmed by looking at the graph of the variance and the associated boxplot: in 2018, 2019 and 2020 we see that *commercial* banks have a large amount of [variation]{.underline} within their observations due to the presence of outliers.
+
+### 3.3. COUNTRY
+
+As a starter, let's evaluate the number of *observations* for every country in the Euro Area in our intersection dataset, containing the banks with available accounts for the *entire* period observed:
+
+```{r}
+#BASIC
+ggplot(data_with_years[data_with_years$year=="2016",], aes(x = country, fill = country)) + 
+  geom_bar(width = 0.7, position = "dodge") +
+  geom_text(stat = 'count', aes(label = after_stat(count)), vjust = -0.30, size = 2.5) +
+  labs(x = "Country", y = "Number of observations") + 
+  ggtitle("Analysis of Countries (2016 - 2021)") +
+  scale_fill_discrete(guide = "none") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+```
+
+Considering that we chose C2 as a consolidation code, which is the one including *larger in size* banks, we see that the country with the most observations is ***France***, followed by ***Spain***. This of course does not mean that France has the greatest number of banks in the Euro Area but the greatest number of consolidated banks with unconsolidated companion.
+
+In order to better visualize the *sizes* of observations according to country, we create the following graphs:
+
+```{r}
+#EQUITY
+ggplot(data_all_year_group_country %>% summarise(totEquity = mean(totEquity, na.rm = TRUE)), 
+       aes(fill = year, y = totEquity, x = country)) +
+  geom_bar(position = "dodge", stat = "identity", color = "bisque2") +
+  labs(title = "Average of Total Equity (2016 - 2021)", x = "Country", y = "Average Tot Equity") +
+  scale_fill_brewer(palette = "Reds", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) 
+
+#ASSETS
+ggplot(data_all_year_group_country %>% summarise(totAssets = mean(totAssets, na.rm = TRUE)), aes(fill = year, y = totAssets, x = country)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "deepskyblue") + 
+  labs(title = "Average of Total Assets (2016 - 2021)", x = "Country", y = "Average Tot Assets") + 
+  scale_fill_brewer(palette = "Blues", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) 
+
+#RETAINED EARNINGS
+ggplot(data_all_year_group_country %>% summarise(retainedEarnings = mean(retainedEarnings, na.rm = TRUE)), aes(fill = year, y = retainedEarnings, x = country)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "forestgreen") + 
+  labs(title = "Average of Retained Earnings (2016 - 2021)", x = "Country", y = "Average Retained Earnings") + 
+  scale_fill_brewer(palette = "Greens", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) 
+
+#OTHER COMPREHENSIVE INCOME
+ggplot(data_all_year_group_country %>% summarise(otherComprIncome = mean(otherComprIncome, na.rm = TRUE)), aes(fill = year, y = otherComprIncome, x = country)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "pink3") + 
+  labs(title = "Average of Other Comprehesinve Income (2016 - 2021)", x = "Country", y = "Average Other Comprehesinve Income") + 
+  scale_fill_brewer(palette = "RdPu", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) 
+```
+
+The graphs show us that the countries with the [largest]{.underline} banks in terms of size are *France*, *Germany*, the *Netherlands* and *Spain*, while the ones with the smallest observations are Latvia, Finland, and Malta.
+
+#### *3.3.1. BASEL III LEVERAGE RATIO*
+
+```{r}
+#LEVERAGE MEAN
+ggplot(data_all_year_group_country %>% summarise(Basel3_leverageRatio_comp = mean(Basel3_leverageRatio_comp, na.rm = TRUE)), 
+       aes(fill = year, y = Basel3_leverageRatio_comp, x = country)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Average of Basel III Leverage Ratio (2016 - 2021)", x = "Country", y = "Average Basel III Leverage Ratio") + 
+  scale_fill_brewer(palette = "Set1", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) 
+```
+
+Analysing the leverage ratio, in order to assess the ability of a company to meet its financial obligations, we can see that the country with the banks that have the [highest]{.underline} mean value is *Greece*, followed by *Portugal* and *Estonia*. However, looking at *Greece*, we see that the value of the ratio has a [decreasing]{.underline} behavior: in fact from 2016 to 2018 it loses around 10%, and keeps diminish in subsequent years. *Estonia* has a similar behavior, but with a smaller degree of loss. *Portugal*, instead, has a [increasing]{.underline} behavior until 2020, with a small drop in 2021.
+
+```{r}
+#LEVERAGE VARIANCE
+ggplot(data_all_year_group_country %>% summarise(Basel3_leverageRatio_comp = var(Basel3_leverageRatio_comp, na.rm = TRUE)), 
+       aes(fill = year, y = Basel3_leverageRatio_comp, x = country)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Variance of Basel III Leverage Ratio (2016 - 2021)", x = "Country", y = "Variance Basel III Leverage Ratio") + 
+  scale_fill_brewer(palette = "Set1", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) 
+
+#LEVERAGE BOXPLOT
+ggplot(data_all_year_group_country[data_all_year_group_country$year=="2016",], aes(x=country, y=Basel3_leverageRatio_comp)) + 
+  geom_boxplot(color = "darkorchid4") +
+  labs(title = "Boxplot of Basel III Leverage Ratio (2016 - 2021)", x = "Country", y = "Basel III Leverage Ratio") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+However, taking a look at the graphs, we see that *Greece*, *Portugal* and the *Netherlands* have a significant [variation]{.underline} within their observations.
+
+We can separate the cases of variation in two:
+
+-   The first one is due to an *asymmetric distribution* of the value of the ratio, in fact the boxplots are much larger above the mean value (Greece and Portugal);
+
+-   The second one is due to the presence of an *outlier* (the Netherlands).
+
+Furthermore, we can conclude that the variances of Greece, Portugal and the Netherlands follow the behavior of the distribution of the mean value.
+
+#### *3.3.2. TIER1 RATIO*
+
+```{r}
+#TIER 1 MEAN
+ggplot(data_all_year_group_country %>% summarise(Tier1_ratio = mean(Tier1_ratio, na.rm = TRUE)), aes(fill = year, y = Tier1_ratio, x = country)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Average of Tier 1 Ratio (2016 - 2021)", x = "Country", y = "Average Tier 1 Ratio") + 
+  scale_fill_brewer(palette = "Paired", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+Inspecting the graph, we can see that the banks of all countries have a similar average value. The ones that differ are *Estonia*, followed by *Portugal*, the *Netherlands*, and *Belgium*, which have a [greater]{.underline} value of average Tier 1 Ratio.
+
+As the previous analysis, we confirm the the value of the ratio has a [decreasing]{.underline} behavior for *Greece* and *Estonia*, and an [increasing]{.underline} one for *Portugal*. *Belgium* banks' average value seems [constant]{.underline}, as the previous ratio. However, the *Netherlands* banks' value is a little different from the Basel III Leverage Ratio, in fact we can see that it has an [increasing]{.underline} behavior with a small drop in 2021, while in the previous graph there is a huge decrease from 2019.
+
+```{r}
+#TIER1 VARIANCE
+ggplot(data_all_year_group_country %>% summarise(Tier1_ratio = var(Tier1_ratio, na.rm = TRUE)), aes(fill = year, y = Tier1_ratio, x = country)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Variance of Tier 1 Ratio (2016 - 2021)", x = "Country", y = "Variance Tier 1 Ratio") + 
+  scale_fill_brewer(palette = "Paired", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+#TIER 1  BOXPLOT
+ggplot(data_all_year_group_country[data_all_year_group_country$year=="2016",], aes(x=country, y=Tier1_ratio)) + 
+  geom_boxplot(color = "olivedrab4") +
+  labs(title = "Boxplot of Tier 1 Ratio (2016 - 2021)", x = "Country", y = "Tier 1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) 
+```
+
+As the previous analysis, we see that *Portugal*, the *Netherlands* and *Greece*, with the addition of *Belgium* and *Germany* have a significant [variation]{.underline} within their observations.
+
+We can separate the cases of variation in two:
+
+-   The first one is due to an *asymmetric distribution* of the value of the ratio, in fact the boxplots are much larger above the mean value (Greece, Portugal, Germany, and the Netherlands);
+
+-   The second one is due to the presence of an *outlier* (Portugal and Greece).
+
+#### *3.3.3. TOTAL CAPITAL RATIO*
+
+```{r}
+#TOT CAP MEAN
+ggplot(data_all_year_group_country %>% summarise(totCapRatio = mean(totCapRatio, na.rm = TRUE)), aes(fill = year, y = totCapRatio, x = country)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Average of Total Capital Ratio (2016 - 2021)", x = "Country", y = "Average total capital ratio") + 
+  scale_fill_brewer(palette = "Dark2", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+Inspecting the graph, we can see that the country with the banks that have the [highest]{.underline} mean value is *Estonia*, followed by the *Netherlands*, *Portugal*, *Luxembourg*, and *Belgium*.
+
+As the previous analysis, we confirm the the value of the ratio has a [decreasing]{.underline} behavior for *Greece* and *Estonia*, an [increasing]{.underline} one for *Portugal*, and a [constant]{.underline} one for *Belgium*. The *Netherlands* banks' mean value follows the distribution of the Basel III Leverage Ratio, in fact we see that it has an [increasing]{.underline} behavior with a small drop in 2021.
+
+```{r}
+#TOT CAP VARIANCE
+ggplot(data_all_year_group_country %>% summarise(totCapRatio = var(totCapRatio, na.rm = TRUE)), aes(fill = year, y = totCapRatio, x = country)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Variance of Total Capital Ratio (2016 - 2021)", x = "Country", y = "Variance Total Capital Ratio") + 
+  scale_fill_brewer(palette = "Dark2", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+#TOT CAP BOXPLOT
+ggplot(data_all_year_group_country[data_all_year_group_country$year=="2016",], aes(x=country, y=totCapRatio)) + 
+  geom_boxplot(color = "thistle4") +
+  labs(title = "Boxplot of Total Capital Ratio (2016 - 2021)", x = "Country", y = "Tot Capital Ratio") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+As the previous analysis, we see that *Portugal*, *Belgium*, the *Netherlands*, *Germany* and *Greece* have a significant [variation]{.underline} within their observations.
+
+We can separate the cases of variation in two:
+
+-   The first one is due to an *asymmetric distribution* of the value of the ratio (Greece, Portugal, Germany and The Netherlands);
+
+-   The second one is due to the presence of an *outlier* (Belgium, Portugal and Greece).
+
+#### *3.3.4. CET1 RATIO*
+
+```{r}
+#CET1 MEAN
+ggplot(data_all_year_group_country %>% summarise(CET1_ratio = mean(CET1_ratio, na.rm = TRUE)), 
+       aes(fill = year, y = CET1_ratio, x = country)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Average of CET1 Ratio (2016 - 2021)", x = "Country", y = "Average CET1 Ratio") + 
+  scale_fill_brewer(palette = "Set3", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) 
+```
+
+Inspecting the graph, we can see that the country with the banks that have the [highest]{.underline} mean value is *Greece*, followed by *Portugal*, *Cyprus* (2020), and *Latvia*. What we can immediately see is that the *Estonian* banks' mean value of CET1 Ratio is the [lowest]{.underline} one, which is a completely different scenario than all previous ones.
+
+```{r}
+#CET1 VARIANCE
+ggplot(data_all_year_group_country %>% summarise(CET1_ratio = var(CET1_ratio, na.rm = TRUE)), 
+       aes(fill = year, y = CET1_ratio, x = country)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Variance of CET1 Ratio (2016 - 2021)", x = "Country", y = "Variance CET1 Ratio") + 
+  scale_fill_brewer(palette = "Set3", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+#CET1 BOXPLOT
+ggplot(data_all_year_group_country[data_all_year_group_country$year=="2016",], aes(x=country, y=CET1_ratio)) + 
+  geom_boxplot(color = "darkgoldenrod1") +
+  labs(title = "Boxplot of CET1 Ratio (2016 - 2021)", x = "Country", y = "CET1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+As the previous analysis, we see that *Portugal* with the addition of *Cyprus* (2020) have a lot of [variation]{.underline} within their observations, due to the presence of two outliers (Portugal).
+
+### 3.4. SIZE
+
+After splitting the observations in ***quartiles*** according to the *size* measured on the value of [total]{.underline} [assets]{.underline}, let's evaluate the number of *observations* for every group in our intersection dataset from 2016 to 2021:
+
+```{r}
+#BASIC
+ggplot(data_all_year_group_size, aes(x = year, fill = size)) + 
+  geom_bar(width = 0.7, position = "dodge", color = "navyblue") +
+  labs(x = "Years", y = "Number of observations") + 
+  ggtitle("Analysis of Size (2016 - 2021)") +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_brewer(palette = 1, name = "Size") 
+```
+
+Inspecting the results, we can notice an [increase]{.underline} in the *large* banks and a [decrease]{.underline} in the very *small* institutions. Consequently, *small* and *medium* banks' behavior changes according to them: for example very small banks become small organisations, increasing the number of small banks and decreasing the one of very small institutions.
+
+Since the four groups (*very small*, *small*, *medium*, and *large*) are created according to the value of the [total]{.underline} [assets]{.underline}, we expect to see a graph with sizes that *increase* from very small to large banks.
+
+In order to get a better view of the size of observations, let's create the following graphs:
+
+```{r}
+#EQUITY
+ggplot(data_all_year_group_size %>% summarise(totEquity = mean(totEquity, na.rm = TRUE)), aes(fill = year, y = totEquity, x = size)) +
+  geom_bar(position = "dodge", stat = "identity", color = "bisque2") +
+  labs(title = "Average of Total Equity (2016 - 2021)", x = "Size", y = "Average Total Equity") +
+  scale_fill_brewer(palette = "Reds", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#ASSETS
+ggplot(data_all_year_group_size %>% summarise(totAssets = mean(totAssets, na.rm = TRUE)), aes(fill = year, y = totAssets, x = size)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "deepskyblue") + 
+  labs(title = "Average of Total Assets (2016 - 2021)", x = "Size", y = "Average Total Assets") + 
+  scale_fill_brewer(palette = "Blues", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#RETAINED EARNINGS
+ggplot(data_all_year_group_size %>% summarise(retainedEarnings = mean(retainedEarnings, na.rm = TRUE)), aes(fill = year, y = retainedEarnings, x = size)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "forestgreen") + 
+  labs(title = "Average of Retained Earnings (2016 - 2021)", x = "Size", y = "Average Retained Earnings") + 
+  scale_fill_brewer(palette = "Greens", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#OTHER COMPREHENSIVE INCOME
+ggplot(data_all_year_group_size %>% summarise(otherComprIncome = mean(otherComprIncome, na.rm = TRUE)), aes(fill = year, y = otherComprIncome, x = size)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "pink3") + 
+  labs(title = "Average of Other Comprehesinve Income (2016 - 2021)", x = "Size", y = "Average Other Comprehesinve Income") + 
+  scale_fill_brewer(palette = "RdPu", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+#### *3.4.1. BASEL III LEVERAGE RATIO*
+
+```{r}
+#LEVERAGE MEAN
+ggplot(data_all_year_group_size %>% summarise(Basel3_leverageRatio_comp = mean(Basel3_leverageRatio_comp, na.rm = TRUE)), aes(fill = year, y = Basel3_leverageRatio_comp, x = size)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Average of Basel III Leverage Ratio (2016 - 2021)", x = "Size", y = "Average Basel III Leverage Ratio") + 
+  scale_fill_brewer(palette = "Set1", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graph, we immediately notice that the banks with the [highest]{.underline} average value are the *very small* ones. Furthermore, the mean values decrease from very small to large institutions. Moreover, we can see that there's a huge difference in the mean value of the very small banks across the years, while others present decreasing but with a smaller degree values.
+
+This means that the distribution of the *average* value is [inversely]{.underline} proportioned to the amount of *total assets*.
+
+```{r}
+#LEVERAGE VARIANCE
+ggplot(data_all_year_group_size %>% summarise(Basel3_leverageRatio_comp = var(Basel3_leverageRatio_comp, na.rm = TRUE)), aes(fill = year, y = Basel3_leverageRatio_comp, x = size)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Variance of Basel III Leverage Ratio (2016-2021)", x = "Size", y = "Variance Basel III Leverage Ratio") + 
+  scale_fill_brewer(palette = "Set1", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#LEVERAGE BOXPLOT
+ggplot(data_all_year_group_size, aes(x = year, y = Basel3_leverageRatio_comp, fill = size)) + 
+  geom_boxplot() +
+  labs(title = "Boxplot of Basel III Leverage Ratio (2016 - 2021)", x = "Year", y = "Basel III Leverage Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Moreover, we can notice that the distribution of the variance follows the one of the average value. In fact, *very small* banks have the [greatest]{.underline} variance and *large* organisations the [lowest]{.underline} one among all banks.
+
+By looking at the boxplot, we can observe that the significant [variation]{.underline} within the very small observations is both due to the presence of *outliers* and the *asymmetric distribution* of the value of the ratio.
+
+#### *3.4.2. TIER1 RATIO*
+
+```{r}
+#TIER 1 MEAN
+ggplot(data_all_year_group_size %>% summarise(Tier1_ratio = mean(Tier1_ratio, na.rm = TRUE)), 
+       aes(fill = year, y = Tier1_ratio, x = size)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Average of Tier 1 Ratio (2016 - 2021)", x = "Size", y = "Average Tier 1 Ratio") + 
+  scale_fill_brewer(palette = "Paired", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+As the previous analysis, we immediately notice that the banks with the [highest]{.underline} average value are the *very small* ones and the mean values [decrease]{.underline} from *very small* to *large* banks. Also in this case, we can observe that there's a huge difference in the mean value of the very small banks across the years 2020 - 2021, while others present decreasing but with a smaller degree values.
+
+However, what differs from the previous ratio is that there's a *common* [increasing]{.underline} behavior among all banks from 2016 to 2021.
+
+```{r}
+#TIER 1 VARIANCE
+ggplot(data_all_year_group_size %>% summarise(Tier1_ratio = var(Tier1_ratio, na.rm = TRUE)), aes(fill = year, y = Tier1_ratio, x = size)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Variance of Tier 1 Ratio (2016-2021)", x = "Size", y = "Variance Tier 1 Ratio") + 
+  scale_fill_brewer(palette = "Paired", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#TIER 1 BOXPLOT
+ggplot(data_all_year_group_size, aes(x = year, y = Tier1_ratio, fill = size)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Boxplot of Tier 1 Ratio (2016 - 2021)", x = "Year", y = "Tier 1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))  
+```
+
+Inspecting the graphs, we can notice that the distribution of the variance follows the one of the average value. In fact, *very small* banks have the [greatest]{.underline} variance and *large* organisations the [lowest]{.underline} one among all banks.
+
+By looking at the boxplot, we can observe that the significant [variation]{.underline} within the very small observations is both due to the presence of *outliers* and the *asymmetric distribution* of the value of the ratio.
+
+#### *3.4.3. TOTAL CAPITAL RATIO*
+
+```{r}
+#TOT CAP MEAN
+ggplot(data_all_year_group_size %>% summarise(totCapRatio = mean(totCapRatio, na.rm = TRUE)), 
+       aes(fill = year, y = totCapRatio, x = size)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Average of Total Capital Ratio (2016 - 2021)", x = "Size", y = "Average Total Capital Ratio") + 
+  scale_fill_brewer(palette = "Dark2", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graphs, we can notice that also in this case the banks with the [highest]{.underline} average value are the *very small* ones and the mean values decrease from *very small* to *large* banks. However, if we take a look at the years 2017 and 2019 we can observe that the mean value of medium banks is close to the one of very small banks.
+
+Furthermore, we keep seeing a [decreasing]{.underline} behavior as the previous scenarios.
+
+```{r}
+#TOT CAP VARIANCE
+ggplot(data_all_year_group_size %>% summarise(totCapRatio = var(totCapRatio, na.rm = TRUE)), aes(fill = year, y = totCapRatio, x = size)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Variance of Total Capital Ratio (2016-2021)", x = "Size", y = "Variance Total Capital Ratio") + 
+  scale_fill_brewer(palette = "Dark2", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#TOT CAP BOXPLOT
+ggplot(data_all_year_group_size, aes(x = year, y = totCapRatio, fill = size)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Boxplot of Total Capital Ratio (2016 - 2021)", x = "Year", y = "Tot Capital Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graphs, we can notice that the distribution of the variance follows the one of the average value.
+
+By looking at the boxplot, we can observe that the significant [variation]{.underline} within the very small observations is both due to the presence of *outliers* and the *asymmetric distribution* of the value of the ratio.
+
+#### *3.4.4. CET1 RATIO*
+
+```{r}
+#CET1 MEAN
+ggplot(data_all_year_group_size %>% summarise(CET1_ratio = mean(CET1_ratio, na.rm = TRUE)), 
+                    aes(fill = year, y = CET1_ratio, x = size)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Average of CET1 Ratio (2016 - 2021)", x = "Size", y = "Average CET1 Ratio") + 
+  scale_fill_brewer(palette = "Set3", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+As the previous analysis, we can notice that the banks with the [highest]{.underline} average value are the *very small* ones.
+
+However, the mean values do not decrease from very small to large banks. In fact, without considering very small banks, we can observe that:
+
+-   Looking at the years 2016, 2017, 2019, *medium* banks have the [highest]{.underline} mean value;
+
+-   Looking at the year 2021, *large* banks have the [highest]{.underline} mean value.
+
+```{r}
+#CET1 VARIANCE
+ggplot(data_all_year_group_size %>% summarise(CET1_ratio = var(CET1_ratio, na.rm = TRUE)), aes(fill = year, y = CET1_ratio, x = size)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white") + 
+  labs(title = "Variance of CET1 Ratio (2016-2021)", x = "Size", y = "Variance CET1 Ratio") + 
+  scale_fill_brewer(palette = "Set3", name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#CET1 BOXPLOT
+ggplot(data_all_year_group_size, aes(x = year, y = CET1_ratio, fill = size)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Boxplot of CET1 Ratio (2016 - 2021)", x = "Year", y = "CET1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graphs, we can notice that also in this case the banks with the [highest]{.underline} average value are the *very small* ones and the mean values decrease from *very small* to *large* banks. However, if we take a look at the years 2017 and 2019 we can observe that the mean value of medium banks is close to the one of very small banks.
+
+We decide to highlight the G-SIB banks:
+
+```{r}
+#Separate G-SIB banks
+data_with_year_g_sibs <- data_with_years
+data_with_year_g_sibs$size <- cut(data_all_year_group_year$totAssets, quantile(data_all_year_group_year$totAssets),
+                            include.lowest = TRUE, labels=c("Very small","Small","Medium", "Large"))
+data_with_year_g_sibs$size <- as.character(data_with_year_g_sibs$size)
+
+data_with_year_g_sibs$size[data_with_year_g_sibs$company %in% c('SOCIETE GENERALE', 'DEUTSCHE BANK AG', 
+                                                                'UNICREDIT SPA', 'CREDIT AGRICOLE CORPORATE AND INVESTMENT BANK SA',
+                                                                'BANCO SANTANDER SA')] <- "G-SIB"
+
+data_with_year_g_sibs <- data_with_year_g_sibs %>% group_by(year, size)
+
+ggplot(data_with_year_g_sibs, aes(x=year, y=totCapRatio, fill=specialisation)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~size, scale="free") +
+  labs(title = "Boxplot of Tot Capital Ratio (2016-2021)", x = "Year", y = "Tot Capital Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data_with_year_g_sibs, aes(x=year, y=Tier1_ratio, fill=specialisation)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~size, scale="free") +
+  labs(title = "Boxplot of Tier1 ratio (2016-2021)", x = "Year", y = "Tier1 ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graphs, we can notice that the observations representing *large* banks tend to have a [more]{.underline} [compact]{.underline} distribution of data compared to very small, small and medium ones. In year 2021 for the observations representing *very small* banks, we see that the variation is very [high]{.underline} (the highest from all years for Tier 1 ratio, Total Capital and Leverage ratio), due to the presence of an outlier that is very distant from the boxplot regarding commercial banks. Considering the value of the ratio of the outlier, we could consider it as a reason for the high variation for that year. The situation is similar for 2020, 2019, and 2018.
+
+### 3.5. MIXED BOXPLOT
+
+Let's analyze the *combination* between the three factors, in order to find out new information about the data:
+
+#### 3.5.1. SPECIALISATION AND COUNTRY
+
+```{r}
+#COUNTRY WRT SPECIALISATION
+#BASEL III LEVERAGE RATIO 
+ggplot(data_all_year_group_country, aes(x = country, y = Basel3_leverageRatio_comp, color = specialisation, size = Basel3_leverageRatio_comp)) +
+  geom_point(alpha=0.7) + 
+  labs(x = 'Country', y = 'Basel III Leverage Ratio') + 
+  ggtitle("Analysis of Basel III Leverage Ratio (2016)") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+
+#BOXPLOT
+ggplot(data_all_year_group_country, aes(x = year, y = Basel3_leverageRatio_comp, fill = specialisation)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~ country, scale = "free") +
+  labs(title = "Boxplot of Basel III Leverage Ratio (2016 - 2021)", x = "Year", y = "Basel III Leverage Ratio") +
+  scale_fill_discrete(name = "Specialisation", labels = c("Commercial Bank", "Investment Bank")) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graphs, we can confirm the previous analysis:
+
+-   *Investment* banks tend to have a [greater]{.underline} average value than commercial ones;
+
+-   *Greece*, *Portugal* and the *Netherlands* are the countries that have the [highest]{.underline} mean value but also a significant [variance]{.underline} due to *outliers*.
+
+```{r}
+#COUNTRY WRT SPECIALISATION
+#TIER1 RATIO 
+ggplot(data_all_year_group_country, aes(x = country, y = Tier1_ratio, color = specialisation, size = Tier1_ratio)) +
+  geom_point(alpha=0.7) + 
+  labs(x = 'Country', y = 'Tier1 Ratio') + 
+  ggtitle("Analysis of Tier1 Ratio (2016)") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+
+#BOXPLOT
+ggplot(data_all_year_group_country, aes(x=year, y=Tier1_ratio, fill=specialisation)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~country, scale="free") +
+  labs(title = "Boxplot of Tier 1 Ratio (2016 - 2021)", x = "Year", y = "Tier 1 Ratio") +
+  scale_fill_discrete(name = "Specialisation", labels = c("Commercial Bank", "Investment Bank")) +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+```
+
+As the previous case, inspecting the graphs we can confirm the Tier1 Ratio analysis:
+
+-   *Investment* banks tend to have a [greater]{.underline} average value than commercial ones;
+
+-   *Portugal*, *Germany*, the *Netherlands*, *Belgium* and *Greece* are the countries that have the [highest]{.underline} mean value but also a significant [variance]{.underline} due to *outliers*.
+
+```{r}
+#COUNTRY WRT SPECIALISATION
+#TOTAL CAPITAL RATIO 
+ggplot(data_all_year_group_country, aes(x = country, y = totCapRatio, color = specialisation, size = totCapRatio)) +
+  geom_point(alpha=0.7) + 
+  labs(x = 'Country', y = 'Total Capital Ratio') + 
+  ggtitle("Analysis of Total Capital Ratio (2016)") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+
+#BOXPLOT
+ggplot(data_all_year_group_country, aes(x=year, y=totCapRatio, fill=specialisation)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~country, scale="free") +
+  labs(title = "Boxplot of Total Capital Ratio (2016 - 2021)", x = "Year", y = "Tot Capital Ratio") +
+  scale_fill_discrete(name = "Specialisation", labels = c("Commercial Bank", "Investment Bank")) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Also in this case, inspecting the graphs we can confirm the previous analysis:
+
+-   *Investment* banks tend to have a [greater]{.underline} average value than commercial ones;
+
+-   *Greece*, *Portugal*, *Germany* and the *Netherlands* are the countries that have the [highest]{.underline} mean value but also a significant [variance]{.underline} due to *outliers*.
+
+```{r}
+#COUNTRY WRT SPECIALISATION
+#CET1 RATIO 
+ggplot(data_all_year_group_country, aes(x = country, y = CET1_ratio, color = specialisation, size = CET1_ratio)) +
+  geom_point(alpha=0.7) + 
+  labs(x = 'Country', y = 'CET1 Ratio') + 
+  ggtitle("Analysis of CET1 Ratio (2016)") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+
+#BOXPLOT
+ggplot(data_all_year_group_country, aes(x=year, y=CET1_ratio, fill=specialisation)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~country, scale="free") +
+  labs(title = "Boxplot of CET1 Ratio (2016 - 2021)", x = "Year", y = "CET1 Ratio") +
+  scale_fill_discrete(name = "Specialisation", labels = c("Commercial Bank", "Investment Bank")) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+As the previous case, inspecting the graphs we can confirm the CET1 Ratio analysis:
+
+-   *Investment* banks tend to have a [greater]{.underline} average value than commercial ones;
+
+-   *Portugal* and the *Netherlands* are the countries that have the [highest]{.underline} mean value but also a significant [variance]{.underline} due to *outliers*.
+
+#### 3.5.2. SPECIALISATION AND SIZE
+
+```{r}
+#SIZE WRT SPECIALISATION
+#BASEL III LEVERAGE RATIO 
+ggplot(data_all_year_group_size, aes(x = size, y = Basel3_leverageRatio_comp, color = specialisation, size = Basel3_leverageRatio_comp)) +
+  geom_point(alpha=0.7) + 
+  labs(x = 'Size', y = 'Basel III Leverage Ratio') + 
+  ggtitle("Analysis of Basel III Leverage Ratio (2016)") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+
+#BOXPLOT
+ggplot(data_all_year_group_size, aes(x = year, y = Basel3_leverageRatio_comp, fill = specialisation)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~size, scale="free") +
+  labs(title = "Boxplot of Basel III Leverage Ratio (2016 - 2021)", x = "Year", y = "Basel III Leverage Ratio") +
+  scale_fill_discrete(name = "Specialisation", labels = c("Commercial Bank", "Investment Bank")) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graphs, we can confirm the previous analysis:
+
+-   *Investment* banks tend to have a [greater]{.underline} average value than commercial ones;
+
+-   *Mean* and *variance* distribution [decrease]{.underline} from very small to large banks, due to the fact that the presence of *outliers* is ***inversely*** proportioned to the number of [total]{.underline} [assets]{.underline}.
+
+```{r}
+#SIZE WRT SPECIALISATION
+#TIER1 RATIO 
+ggplot(data_all_year_group_size, aes(x = size, y = Tier1_ratio, color = specialisation, size = Tier1_ratio)) +
+  geom_point(alpha=0.7) + 
+  labs(x = 'Country', y = 'Tier1 Ratio') + 
+  ggtitle("Analysis of Tier1 Ratio (2016)") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+
+#BOXPLOT
+ggplot(data_all_year_group_size, aes(x = year, y = Tier1_ratio, fill = specialisation)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~ size, scale = "free") +
+  labs(title = "Boxplot of Tier 1 Ratio (2016 - 2021)", x = "Year", y = "Tier 1 Ratio") +
+  scale_fill_discrete(name = "Specialisation", labels = c("Commercial Bank", "Investment Bank")) +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+As the previous case, inspecting the graphs we can confirm the Tier1 Ratio analysis:
+
+-   *Investment* banks tend to have a [greater]{.underline} average value than commercial ones;
+
+-   *Mean* and *variance* distribution [decrease]{.underline} from very small to large banks, due to the fact that the presence of *outliers* is ***inversely*** proportioned to the number of [total]{.underline} [assets]{.underline}.
+
+```{r}
+#SIZE WRT SPECIALISATION
+#TOTAL CAPITAL RATIO 
+ggplot(data_all_year_group_size, aes(x = size, y = totCapRatio, color = specialisation, size = totCapRatio)) +
+  geom_point(alpha=0.7) + 
+  labs(x = 'Country', y = 'Total Capital Ratio') + 
+  ggtitle("Analysis of Total Capital Ratio (2016)") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+
+#BOXPLOT
+ggplot(data_all_year_group_size, aes(x = year, y = totCapRatio, fill = specialisation)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~ size, scale = "free") +
+  labs(title = "Boxplot of Total Capital Ratio (2016 - 2021)", x = "Year", y = "Tot Capital Ratio") +
+  scale_fill_discrete(name = "Specialisation", labels = c("Commercial Bank", "Investment Bank")) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graphs, we can confirm the previous analysis:
+
+-   *Investment* banks tend to have a [greater]{.underline} average value than commercial ones;
+
+-   *Mean* and *variance* distribution [decrease]{.underline} from very small to large banks, due to the fact that the presence of *outliers* is ***inversely*** proportioned to the number of [total]{.underline} [assets]{.underline}.
+
+```{r}
+#SIZE WRT SPECIALISATION
+#CET1 RATIO 
+ggplot(data_all_year_group_size, aes(x = size, y = CET1_ratio, color = specialisation, size = CET1_ratio)) +
+  geom_point(alpha=0.7) + 
+  labs(x = 'Country', y = 'CET1 Ratio') + 
+  ggtitle("Analysis of CET1 Ratio (2016)") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+
+#BOXPLOT
+ggplot(data_all_year_group_size, aes(x=year, y=CET1_ratio, fill=specialisation)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~size, scale="free") +
+  labs(title = "Boxplot of CET1 Ratio (2016-2021)", x = "Year", y = "CET1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+As the previous case, inspecting the graphs we can confirm the CET1 Ratio analysis:
+
+-   *Investment* banks tend to have a [greater]{.underline} average value than commercial ones;
+
+-   *Mean* and *variance* distribution [decrease]{.underline} from very small to large banks, due to the fact that the presence of *outliers* is ***inversely*** proportioned to the number of [total]{.underline} [assets]{.underline}.
+
+#### 3.5.3. COUNTRY AND SIZE
+
+```{r}
+#SIZE WRT COUNTRY
+#BASEL III LEVERAGE RATIO 
+ggplot(data_all_year_group_country, aes(x = country, y = Basel3_leverageRatio_comp, color = size, size = Basel3_leverageRatio_comp)) +
+  geom_point(alpha=0.7) + 
+  labs(x = 'Country', y = 'Basel III Leverage Ratio') + 
+  ggtitle("Analysis of Basel III Leverage Ratio (2016)") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+
+#BOXPLOT
+ggplot(data_all_year_group_country, aes(x = year, y = Basel3_leverageRatio_comp, fill = size)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~ country, scale = "free") +
+  labs(title = "Boxplot of Basel III Leverage Ratio (2016 - 2021)", x = "Year", y = "Basel III Leverage Ratio") +
+  scale_fill_discrete(name = "Specialisation") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graphs, we can confirm the previous analysis:
+
+-   *Mean* and *variance* distribution [decrease]{.underline} from very small to large banks, due to the fact that the presence of *outliers* is ***inversely*** proportioned to the number of [total]{.underline} [assets]{.underline};
+
+-   *Greece*, *Portugal* and the *Netherlands* are the countries that have the [highest]{.underline} mean value but also a significant [variance]{.underline} due to *outliers*.
+
+```{r}
+#SIZE WRT COUNTRY
+#TIER1 RATIO
+ggplot(data_all_year_group_country, aes(x = country, y = Tier1_ratio, color = size, size = Tier1_ratio)) +
+  geom_point(alpha=0.7) + 
+  labs(x = 'Country', y = 'Tier1 Ratio') + 
+  ggtitle("Analysis of Tier1 Ratio (2016)") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+
+#TIER 1 RATIO BOXPLOT
+ggplot(data_all_year_group_country, aes(x=year, y=Tier1_ratio, fill=size)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~country, scale="free") +
+  labs(title = "Boxplot of Tier 1 Ratio (2016 - 2021)", x = "Year", y = "Tier 1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+As the previous case, inspecting the graphs we can confirm the Tier1 Ratio analysis:
+
+-   *Mean* and *variance* distribution [decrease]{.underline} from very small to large banks, due to the fact that the presence of *outliers* is ***inversely*** proportioned to the number of [total]{.underline} [assets]{.underline};
+
+-   *Greece*, *Portugal*, the *Netherlands*, *Belgium* and *Greece* are the countries that have the [highest]{.underline} mean value but also a significant [variance]{.underline} due to *outliers*.
+
+```{r}
+#SIZE WRT COUNTRY
+#TOTAL CAPITAL RATIO
+ggplot(data_all_year_group_country, aes(x = country, y = totCapRatio, color = size, size = totCapRatio)) +
+  geom_point(alpha=0.7) + 
+  labs(x = 'Country', y = 'Total Capital Ratio') + 
+  ggtitle("Analysis of Total Capital Ratio (2016)") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+
+#BOXPLOT
+ggplot(data_all_year_group_country, aes(x=year, y=totCapRatio, fill=size)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~country, scale="free") +
+  labs(title = "Boxplot of Total Capital Ratio (2016 - 2021)", x = "Year", y = "Tot Capital Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the graphs, we can confirm the previous analysis:
+
+-   *Mean* and *variance* distribution [decrease]{.underline} from very small to large banks, due to the fact that the presence of *outliers* is ***inversely*** proportioned to the number of [total]{.underline} [assets]{.underline};
+
+-   *Greece*, *Portugal*, *Germany* and the *Netherlands* are the countries that have the [highest]{.underline} mean value but also a significant [variance]{.underline} due to *outliers*.
+
+```{r}
+#SIZE WRT COUNTRY
+#CET1 RATIO
+ggplot(data_all_year_group_country, aes(x = country, y = CET1_ratio, color = size, size = CET1_ratio)) +
+  geom_point(alpha=0.7) + 
+  labs(x = 'Country', y = 'CET1 Ratio') + 
+  ggtitle("Analysis of CET1 Ratio (2016)") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+
+#BOXPLOT
+ggplot(data_all_year_group_country, aes(x=year, y=CET1_ratio, fill=size)) + 
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~country, scale="free") +
+  labs(title = "Boxplot of CET1 Ratio (2016 - 2021)", x = "Year", y = "CET1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+As the previous case, inspecting the graphs we can confirm the CET1 Ratio analysis:
+
+-   *Mean* and *variance* distribution [decrease]{.underline} from very small to large banks, due to the fact that the presence of *outliers* is ***inversely*** proportioned to the number of [total]{.underline} [assets]{.underline};
+
+-   *Portugal* and the *Netherlands* are the countries that have the [highest]{.underline} mean value but also a significant [variance]{.underline} due to *outliers*.
+
+### 3.6. WELL CAPITALISED BANKS
+
+In order to operate without regulatory restrictions, an institution must be *well-capitalized*. Thus, we proceed with our analysis by considering only the observations that satisfy the following requirements:
+
+-   *Basel III Leverage Ratio* greater or equal than **3%**;
+
+-   *Tier1 Ratio* greater or equal than **6%**;
+
+-   *Total Capital Ratio* greater or equal than **8%**;
+
+-   *CET1 Ratio* of greater or equal than **4.5%**.
+
+```{r}
+#FOR WELL CAP BANKS 
+LR <- subset(data_with_years, Basel3_leverageRatio_comp >= 3)
+T1 <- subset(data_with_years, Tier1_ratio >= 6)
+CR <- subset(data_with_years, totCapRatio >= 8)
+CET1 <- subset(data_with_years, CET1_ratio >= 4.5)
+
+commonWC <- intersect(LR$company, T1$company)
+commonWC <- intersect(commonWC, CR$company)
+commonWC <- intersect(commonWC, CET1$company)
+data_WC <- data_with_years[data_with_years$company %in% commonWC,]
+data_WC_group_year <- data_WC %>% group_by(year)
+```
+
+Then, maintaining to the previous structure, let's perform the analysis of the *well capitalised* banks in our sample:
+
+```{r}
+#BASIC
+ggplot(data_WC_group_year[data_WC_group_year$year == "2016",], aes(x = specialisation, fill = specialisation)) + 
+  geom_bar(width = 0.7, position = "dodge") +
+  geom_text(stat = 'count', aes(label = after_stat(count)), vjust = -0.30, size = 3.2) +
+  labs(x = "Specialisation", y = "Number of observations") + 
+  ggtitle("Specialisation of Well Capitalised Banks (2016 - 2021)") +
+  scale_fill_discrete(guide = "none") +
+  theme(plot.title = element_text(hjust = 0.5))  #to center
+
+huxtable(Tot_Banks = nrow(data_WC_group_year[data_WC_group_year$year == "2016",]), Commercial_Banks = sum(data_WC_group_year[data_WC_group_year$year == "2016",]$specialisation == 'Commercial bank'), Investment_Banks = sum(data_WC_group_year[data_WC_group_year$year == "2016",]$specialisation == 'Investment bank'))
+
+ggplot(data_WC_group_year[data_WC_group_year$year == "2016",], aes(x = country, fill = country)) + 
+  geom_bar(width = 0.7, position = "dodge") +
+  geom_text(stat = 'count', aes(label = after_stat(count)), vjust = -0.30, size = 2.5) +
+  labs(x = "Country", y = "Number of observations") + 
+  ggtitle("Analysis of Well Capitalised Banks across Country (2016 - 2021)") +
+  scale_fill_discrete(guide = "none") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))  #to center
+
+ggplot(data_WC_group_year, aes(x = size, fill = year, group = year)) + 
+  geom_bar(width = 0.7, position = "dodge", color = "navyblue") +
+  labs(x = "Size", y = "Number of observations") + 
+  ggtitle("Analysis of Well Capitalised Banks across Size (2016 - 2021)") +
+  scale_fill_brewer(palette = 1, name = "Year") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Inspecting the BarPlot, we can observe that **111** financial institutions are *commercial banks* (about *88.8%*), while the remaining **14** organizations are *investment banks* (*11.2%*). According to the previous results, we can notice that the country with the most observations is ***France***, followed by ***Italy***, ***Portugal***, ***Germany*** and ***Spain***. Moreover, regarding the size we can confirm an [increase]{.underline} in the *large* banks and a [decrease]{.underline} in the very *small* institutions. Consequently, *small* and *medium* banks' behavior changes according to them.
+
+```{r}
+#EQUITY
+ggplot(data_WC_group_year %>% summarise(totEquity = mean(totEquity, na.rm = TRUE)), 
+                   aes(x = year, y = totEquity)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "orange", fill = "bisque") +
+  labs(title = "Average of Total Equity WC (2016 - 2021)", x = "Year", y = "Average Total Equity") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#ASSETS
+ggplot(data_WC_group_year %>% summarise(totAssets = mean(totAssets, na.rm = TRUE)), 
+                   aes(x = year, y = totAssets)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "deepskyblue3", fill = "darkslategray2") +
+  labs(title = "Average of Total Assets WC (2016 - 2021)", x = "Year", y = "Average Total Assets") +
+  theme(plot.title = element_text(hjust = 0.5))  
+
+#RETAINED EARNINGS
+ggplot(data_WC_group_year %>% summarise(retainedEarnings = mean(retainedEarnings, na.rm = TRUE)), 
+                   aes(x = year, y = retainedEarnings)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "forestgreen", fill = "lightgreen") +
+  labs(title = "Average of Retained Earnings WC (2016 - 2021)", x = "Year", y = "Average Retained Earnings") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#OTHER COMPREHENSIVE INCOME
+ggplot(data_WC_group_year %>% summarise(otherComprIncome = mean(otherComprIncome, na.rm = TRUE)), 
+       aes(x = year, y = otherComprIncome)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "pink3", fill = "rosybrown1") +
+  labs(title = "Average of Other Comprehesinve Income WC (2016 - 2021)", x = "Year", y = "Average Other Comprehensive Income") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+As in the generic case, inspecting the graphs we can infer that the mean value of the [total equity]{.underline}, [total assets]{.underline} and [retained earnings]{.underline} *increases* across the years. Otherwise, the graph representing the [other comprehensive income]{.underline} is the only one that presents a different behavior: 2019 and 2020 are the years in which the mean value is strictly *positive*, while the lowest average amount is reached in 2018.
+
+```{r}
+#LEVERAGE RATIO
+ggplot(data_WC_group_year %>% summarise(Basel3_leverageRatio_comp= mean(Basel3_leverageRatio_comp, na.rm = TRUE)), 
+       aes(x = year, y = Basel3_leverageRatio_comp)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "darkorchid4", fill = "plum") +
+  geom_hline(aes(yintercept = 3), colour = "deeppink") +
+  labs(title = "Average of Basel III Leverage Ratio WC (2016 - 2021)", x = "Year", y = "Average Basel III Leverage Ratio") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#TIER 1 RATIO
+ggplot(data_WC_group_year %>% summarise(Tier1_ratio = mean(Tier1_ratio, na.rm = TRUE)), 
+       aes(x = year, y = Tier1_ratio)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "olivedrab4", fill = "olivedrab1") +
+  geom_hline(aes(yintercept = 6), colour = "forestgreen") +
+  labs(title = "Average of Tier 1 Ratio WC (2016 - 2021)", x = "Year", y = "Average Tier 1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#TOT CAP RATIO
+ggplot(data_WC_group_year %>% summarise(totCapRatio = mean(totCapRatio, na.rm = TRUE)), 
+       aes(x = year, y = totCapRatio)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "thistle4", fill = "thistle") +
+  geom_hline(aes(yintercept = 8), colour = "purple") +
+  labs(title = "Average of Total Capital Ratio WC (2016 - 2021)", x = "Year", y = "Average Tot Capital Ratio") +
+  theme(plot.title = element_text(hjust = 0.5))  
+
+#CET1 RATIO
+ggplot(data_WC_group_year %>% summarise(CET1_ratio = mean(CET1_ratio, na.rm = TRUE)), 
+       aes(x = year, y = CET1_ratio)) +
+  geom_bar(position = "dodge", stat = "identity", 
+           width = 0.6, show.legend = FALSE, color = "darkgoldenrod3", fill = "darkgoldenrod1") +
+  geom_hline(aes(yintercept = 4.5), colour = "darkolivegreen4") +
+  labs(title = "Average of CET1 Ratio WC (2016 - 2021)", x = "Year", y = "Average CET1 Ratio") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+Inspecting the graph, we can notice that on average the observations in our sample do *satisfy* the Basel III requirements regarding the Leverage Ratio. Moreover, we can infer that both the banks' financial *strength* and the *stability* of the banks' financial system of our sample [increase]{.underline} across the years, *satisfying* the minimum threshold regarding the Tier1 Ratio and the Total Capital Ratio. However, regarding the CET1, the scenario is slightly *different*: the mean value appears [constant]{.underline}, with the exception of the years 2018 and 2020, where the average value is *greater*. By the way, also the minimum threshold of CET1 is satisfied.
+
+### 3.7. CAPITALISATION ANALYSIS
+
+```{r}
+data_WC_group_specialisation <- data_WC %>% group_by(specialisation)
+Tot_banks <- nrow(data_all_year_group_specialization[data_all_year_group_specialization$year == '2016',])
+Tot_banks_WC <- nrow(data_WC_group_specialisation[data_WC_group_specialisation$year == "2016",])
+huxtable(Tot_banks = Tot_banks, Tot_banks_WC = Tot_banks_WC, Percentage_WC = Tot_banks_WC/Tot_banks*100)
+```
+
+Considering only the observations with available accounts for the *entire* period observed, we can infer that **125** financial institutions are [well]{.underline} [capitalised]{.underline} (about *68.3%*).
+
+```{r}
+#SPECIALISATION
+
+WC_spec <- data_WC_group_specialisation[data_WC_group_specialisation$year == '2016',] %>% 
+  group_by(specialisation) %>% 
+  summarise(total_count = n(), .groups = 'drop')
+Tot_spec <- data_with_years[data_with_years$year == '2016',] %>% 
+  group_by(specialisation) %>% 
+  summarise(total_count = n(), .groups = 'drop')
+
+Spec <- cbind(Tot_spec, WC_spec$total_count, percentage = WC_spec$total_count/Tot_spec$total_count*100)
+colnames(Spec) <- c("Specialisation", "Tot_Count", "Tot_Count_WC", "Percentage_WC") 
+as_huxtable(Spec)
+
+ggplot(Spec, aes(fill = Specialisation, y = Percentage_WC, x = Specialisation)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white", width = 0.8) + 
+  labs(title = "Well Capitalised (2016 - 2021)", x = "Specialisation", y = "Percentage of WELL CAP") + 
+  scale_fill_brewer(palette = "Set1") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+Analysing the results, we can observe that **111** [commercial]{.underline} banks are *well capitalised* (about *68.5%*), while **14** [investment]{.underline} banks satisfy the minimum threshold to be *well capitalised* (about *66.7%*).
+
+```{r}
+#COUNTRY
+WC_country <- data_WC_group_specialisation[data_WC_group_specialisation$year == '2016',] %>% 
+  group_by(country) %>% 
+  summarise(total_count = n(), .groups = 'drop')
+Tot_country <- data_with_years[data_with_years$year == '2016',] %>% 
+  group_by(country) %>% 
+  summarise(total_count = n(), .groups = 'drop')
+
+Country <- cbind(Tot_country, WC_country$total_count, percentage = WC_country$total_count/Tot_country$total_count*100)
+colnames(Country) <- c("Country", "Tot_Count", "Tot_Count_WC", "Percentage_WC") 
+as_huxtable(Country)
+
+ggplot(Country, aes(fill = Country, y = Percentage_WC, x = Country)) + 
+  geom_bar(position = "dodge", stat = "identity", color = "white", width = 0.8) + 
+  labs(title = "Well Capitalised (2016 - 2021)", x = "Country", y = "Percentage of WELL CAP") + 
+  scale_fill_discrete(guide = "none") +
+  theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) 
+```
+
+Inspecting the graph, we can notice that the countries with ***all*** banks in our sample that are [well]{.underline} [capitalised]{.underline} are *Estonia* and *Greece*. The other countries have a *lower* percentage of well capitalised banks, and the minimum value (about *50%*) is reached by Cyprus and Finland.
+
+```{r}
+#SIZE
+WC_size <- data_WC_group_specialisation %>% 
+  group_by(year, size) %>% 
+  summarise(total_count = n(), .groups = 'drop')
+Tot_size <- data_with_years %>% 
+  group_by(year, size) %>% 
+  summarise(total_count = n(), .groups = 'drop') 
+
+Size <- cbind(Tot_size, WC_size$total_count, percentage = WC_size$total_count/Tot_size$total_count*100)
+colnames(Size) <- c("Year", "Size", "Tot_Count", "Tot_Count_WC", "Percentage_WC") 
+as_huxtable(Size)
+
+Size_group_year <- Size %>% group_by(Year)
+
+ggplot(Size_group_year, aes(x = Year, fill = Size, y = Percentage_WC)) + 
+  geom_bar(width = 0.8, position = "dodge", stat = "identity", color = "white") +
+  labs(x = "Year", y = "Percentage of WELL CAP") + 
+  ggtitle("Well Capitalised (2016 - 2021)") +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  scale_fill_brewer(palette = "Paired")
+```
+
+Considering only the *medium* and *large* banks, we can notice a [constant]{.underline} behavior through the years. *Very small* and *small* institutions, instead, have a respectively slightly [increase]{.underline} and [decrease]{.underline} in the percentage across the period 2016 - 2021. However, we can conclude that the percentage of well capitalised banks decrease with the size of the banks. In fact, we notice that around ***89%*** of *large* banks are [well]{.underline} [capitalised]{.underline}, while only around ***45.8%*** of *very small* ones are well capitalised.
+
+### 4. CONCLUSION
+
+In conclusion, we would like to map a general recap by taking an *overall* view at the ***capitalization** analysis* of the observations in our sample for the 2016 - 2021 period.
+
+Considering the average of [Leverage]{.underline} Ratio, [Tier1]{.underline} ratio, [Total]{.underline} [Capital]{.underline} Ratio and [CET1]{.underline} Ratio, the percentage of *very small* banks compliant to the thresholds of the ratios is [lower]{.underline} than for *large* banks contained in our sample. Despite the fact that the *average* of the observations representing *small* banks is [higher]{.underline}, the observations representing *larger* institutions tend to maintain a [higher]{.underline} percentage of compliant banks.
+
+To analyse the capitalization throughout this period it is worth comparing the [general]{.underline} analysis with the [well]{.underline} [capitalised]{.underline} organisations and inspecting the ratios. We notice that, on average, the observations in our sample do ***satisfy*** the *requirements* well. Nevertheless, considering the [variance]{.underline} things slightly *change*: in fact, the actual percentage of well capitalised banks is not as high as we thought expect if we look only at the average value of the ratios. Considering the importance and the bindingness of the *Basel* accord and the social and economic *risks* associated with the insolvency of a bank, we expected a higher percentage of compliant observation. However, we can conclude saying that on average banks in the [Euro]{.underline} [Area]{.underline} are ***sufficiently*** *capitalized*, even though this statement shall be treated with caution and there is always the need for a profound analysis.
